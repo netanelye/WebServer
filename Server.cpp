@@ -2,6 +2,7 @@
 
 bool addSocket(Server& i_Server, SOCKET id, int what)
 {
+	unsigned long flag = 1;
 	for (int i = 0; i < MAX_SOCKETS; i++)
 	{
 		if (i_Server.sockets[i].recv == EMPTY)
@@ -11,15 +12,14 @@ bool addSocket(Server& i_Server, SOCKET id, int what)
 			i_Server.sockets[i].send = IDLE;
 			i_Server.sockets[i].len = 0;
 			i_Server.socketsCount++;
-			unsigned long flag = 1;
 			if (ioctlsocket(i_Server.sockets[i].id, FIONBIO, &flag) != 0)
 			{
 				cout << "Time Server: Error at ioctlsocket(): " << WSAGetLastError() << endl;
 			}
-			return (true);
+			return true;
 		}
 	}
-	return (false);
+	return false;
 }
 
 void removeSocket(Server& i_Server, int index)
@@ -93,28 +93,11 @@ void receiveMessage(Server& i_Server, int index)
 			if (strncmp(i_Server.sockets[index].buffer, "GET", 3) == 0)
 			{
 				i_Server.sockets[index].send = SEND;
-				i_Server.sockets[index].sendSubType = GET;
+				i_Server.sockets[index].sendSubType = SEND_GET;
 				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[3], i_Server.sockets[index].len - 3);
 				i_Server.sockets[index].len -= 3;
 				return;
 			}
-			else if (strncmp(i_Server.sockets[index].buffer, "TimeString", 10) == 0)
-			{
-				i_Server.sockets[index].send = SEND;
-				i_Server.sockets[index].sendSubType = SEND_TIME;
-				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[10], i_Server.sockets[index].len - 10);
-				i_Server.sockets[index].len -= 10;
-				return;
-			}
-			else if (strncmp(i_Server.sockets[index].buffer, "SecondsSince1970", 16) == 0)
-			{
-				i_Server.sockets[index].send = SEND;
-				i_Server.sockets[index].sendSubType = SEND_SECONDS;
-				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[16], i_Server.sockets[index].len - 16);
-				i_Server.sockets[index].len -= 16;
-				return;
-			}
-
 			else if (strncmp(i_Server.sockets[index].buffer, "Exit", 4) == 0)
 			{
 				closesocket(msgSocket);
@@ -131,7 +114,7 @@ void sendMessage(Server& i_Server, int index)
 	string sendBuff;
 
 	SOCKET msgSocket = i_Server.sockets[index].id;
-	if (i_Server.sockets[index].sendSubType == GET)
+	if (i_Server.sockets[index].sendSubType == SEND_GET)
 	{
 		ifstream htmlFile("index.html");
 		if (htmlFile.is_open())
@@ -329,7 +312,7 @@ bool initServerSide(Server& i_Server)
 	// inet_addr (Iternet address) is used to convert a string (char *) 
 	// into unsigned long.
 	// The IP address is INADDR_ANY to accept connections on all interfaces.
-	serverService.sin_addr.s_addr = INADDR_ANY;
+	serverService.sin_addr.s_addr = INADDR_ANY; //inet_addr("10.100.102.12")
 	// IP Port. The htons (host to network - short) function converts an
 	// unsigned short from host to TCP/IP network byte order 
 	// (which is big-endian).
@@ -360,4 +343,28 @@ bool initServerSide(Server& i_Server)
 		return false;
 	}
 	return true;
+}
+
+void initServer(Server& i_Server)
+{
+
+}
+
+void initRequests(Server& i_Server)
+{
+	const int SEND_OPTIONS = 1;
+	const int SEND_GET = 2;
+	const int SEND_HEAD = 3;
+	const int SEND_POST = 4;
+	const int SEND_PUT = 5;
+	const int SEND_DELETE = 6;
+	const int SEND_TRACE = 7;
+
+	i_Server.requests[0].reqAsString = "GET";
+	i_Server.requests[1].reqAsString = "POST";
+	i_Server.requests[2].reqAsString = "GET";
+	i_Server.requests[3].reqAsString = "GET";
+	i_Server.requests[4].reqAsString = "GET";
+	i_Server.requests[5].reqAsString = "GET";
+	i_Server.requests[6].reqAsString = "GET";
 }

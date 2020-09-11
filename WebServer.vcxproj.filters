@@ -28,6 +28,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="index.html" />
+    <None Include="index-EN.html" />
+    <None Include="index-he.html" />
   </ItemGroup>
 </Project>
