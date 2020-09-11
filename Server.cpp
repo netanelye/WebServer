@@ -129,20 +129,23 @@ void sendMessage(Server& i_Server, int index)
 {
 	int bytesSent = 0;
 	string sendBuff;
-	std::ifstream htmlFile("index.html");
-	if (htmlFile.good())
-	{
 
-	}
-	string htmlFilePath = "index.html";
 	SOCKET msgSocket = i_Server.sockets[index].id;
 	if (i_Server.sockets[index].sendSubType == GET)
 	{
-		sendBuff = "HTTP/1.1 200 OK\r\n";
-		sendBuff += "Cache-Control: no-cache, private\r\n";
-		sendBuff += "Content-Type: text/html\r\n";
-		sendBuff += "Content-Length: 5\r\n\r\n";
-		sendBuff += "hello";
+		ifstream htmlFile("index.html");
+		if (htmlFile.is_open())
+		{
+			string htmlFilePath = "index.html";
+			sendBuff = "HTTP/1.1 200 OK\r\n";
+			sendBuff += "Cache-Control: no-cache, private\r\n";
+			sendBuff += "Content-Type: text/html\r\n";
+			sendBuff += "Content-Length: 5\r\n\r\n";
+		}
+		else
+		{
+			return;
+		}
 	}
 
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);

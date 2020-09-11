@@ -28,8 +28,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="index.html">
-      <Filter>Resource Files</Filter>
-    </None>
+    <None Include="index.html" />
   </ItemGroup>
 </Project>
