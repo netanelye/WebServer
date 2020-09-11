@@ -136,11 +136,16 @@ void sendMessage(Server& i_Server, int index)
 		ifstream htmlFile("index.html");
 		if (htmlFile.is_open())
 		{
-			string htmlFilePath = "index.html";
+			string temp;
+			string output;
+			while (getline(htmlFile, temp)) {
+				output += temp;
+			}
 			sendBuff = "HTTP/1.1 200 OK\r\n";
 			sendBuff += "Cache-Control: no-cache, private\r\n";
 			sendBuff += "Content-Type: text/html\r\n";
-			sendBuff += "Content-Length: 5\r\n\r\n";
+			sendBuff += string("Content-Length: ") += string(to_string(output.size())) += "\r\n\r\n";
+			sendBuff += output;
 		}
 		else
 		{
