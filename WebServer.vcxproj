@@ -145,6 +145,9 @@
   <ItemGroup>
     <ClInclude Include="Server.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="index.html" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

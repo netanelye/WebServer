@@ -90,7 +90,15 @@ void receiveMessage(Server& i_Server, int index)
 
 		if (i_Server.sockets[index].len > 0)
 		{
-			if (strncmp(i_Server.sockets[index].buffer, "TimeString", 10) == 0)
+			if (strncmp(i_Server.sockets[index].buffer, "GET", 3) == 0)
+			{
+				i_Server.sockets[index].send = SEND;
+				i_Server.sockets[index].sendSubType = GET;
+				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[3], i_Server.sockets[index].len - 3);
+				i_Server.sockets[index].len -= 3;
+				return;
+			}
+			else if (strncmp(i_Server.sockets[index].buffer, "TimeString", 10) == 0)
 			{
 				i_Server.sockets[index].send = SEND;
 				i_Server.sockets[index].sendSubType = SEND_TIME;
@@ -120,39 +128,31 @@ void receiveMessage(Server& i_Server, int index)
 void sendMessage(Server& i_Server, int index)
 {
 	int bytesSent = 0;
-	char sendBuff[255];
+	string sendBuff;
+	std::ifstream htmlFile("index.html");
+	if (htmlFile.good())
+	{
 
+	}
+	string htmlFilePath = "index.html";
 	SOCKET msgSocket = i_Server.sockets[index].id;
-	if (i_Server.sockets[index].sendSubType == SEND_TIME)
+	if (i_Server.sockets[index].sendSubType == GET)
 	{
-		// Answer client's request by the current time string.
-
-		// Get the current time.
-		time_t timer;
-		time(&timer);
-		// Parse the current time to printable string.
-		strcpy(sendBuff, ctime(&timer));
-		sendBuff[strlen(sendBuff) - 1] = 0; //to remove the new-line from the created string
-	}
-	else if (i_Server.sockets[index].sendSubType == SEND_SECONDS)
-	{
-		// Answer client's request by the current time in seconds.
-
-		// Get the current time.
-		time_t timer;
-		time(&timer);
-		// Convert the number to string.
-		_itoa((int)timer, sendBuff, 10);
+		sendBuff = "HTTP/1.1 200 OK\r\n";
+		sendBuff += "Cache-Control: no-cache, private\r\n";
+		sendBuff += "Content-Type: text/html\r\n";
+		sendBuff += "Content-Length: 5\r\n\r\n";
+		sendBuff += "hello";
 	}
 
-	bytesSent = send(msgSocket, sendBuff, (int)strlen(sendBuff), 0);
+	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
 	if (SOCKET_ERROR == bytesSent)
 	{
 		cout << "Time Server: Error at send(): " << WSAGetLastError() << endl;
 		return;
 	}
 
-	cout << "Time Server: Sent: " << bytesSent << "\\" << strlen(sendBuff) << " bytes of \"" << sendBuff << "\" message.\n";
+	cout << "Time Server: Sent: " << bytesSent << "\\" << sendBuff.size() << " bytes of \"" << sendBuff << "\" message.\n";
 
 	i_Server.sockets[index].send = IDLE;
 }

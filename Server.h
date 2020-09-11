@@ -2,6 +2,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
+#include <fstream> 
 using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 #include <winsock2.h>
@@ -24,9 +25,9 @@ const int LISTEN = 1;
 const int RECEIVE = 2;
 const int IDLE = 3;
 const int SEND = 4;
+const int GET = 5;
 const int SEND_TIME = 1;
 const int SEND_SECONDS = 2;
-
 typedef struct server
 {
 	SocketState sockets[MAX_SOCKETS] = { 0 };
