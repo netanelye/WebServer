@@ -146,7 +146,7 @@
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="index-en.htm">
+    <None Include="index-en.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="index-he.html">

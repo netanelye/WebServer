@@ -29,6 +29,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="index-he.html" />
-    <None Include="index-en.htm" />
+    <None Include="index-en.html" />
   </ItemGroup>
 </Project>

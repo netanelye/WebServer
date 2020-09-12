@@ -133,7 +133,7 @@ void sendMessage(Server& i_Server, int index)
 		}
 		else
 		{
-			htmlFile.open("index.html");
+			htmlFile.open("index-en.html");
 		}
 		if (htmlFile.is_open())
 		{
@@ -153,7 +153,6 @@ void sendMessage(Server& i_Server, int index)
 		{
 			return;
 		}
-
 	}
 
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
