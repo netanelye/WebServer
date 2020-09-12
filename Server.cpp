@@ -94,7 +94,7 @@ void receiveMessage(Server& i_Server, int index)
 			{
 				getSubType(i_Server, index);
 				i_Server.sockets[index].send = SEND;
-				i_Server.sockets[index].sendSubType = SEND_GET_DEFAULT;
+				i_Server.sockets[index].sendSubType = SEND_GET;
 				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[3], i_Server.sockets[index].len - 3);
 				i_Server.sockets[index].len -= 3;
 				return;
@@ -113,46 +113,11 @@ void sendMessage(Server& i_Server, int index)
 {
 	int bytesSent = 0;
 	string sendBuff;
-	ifstream htmlFile; 
+	
 	SOCKET msgSocket = i_Server.sockets[index].id;
-	if (i_Server.sockets[index].sendSubType == SEND_GET_DEFAULT)
+	if (i_Server.sockets[index].sendSubType == SEND_GET)
 	{
-		string htmlPath;
-		if (i_Server.sockets[index].isQuary)
-		{
-			if (i_Server.sockets[index].quary == "he")
-			{
-				htmlPath = "index-he.html";
-			}
-			else if (i_Server.sockets[index].quary == "en")
-			{
-				htmlPath = "index-en.html";
-			}
-
-			htmlFile.open(htmlPath.c_str());
-		}
-		else
-		{
-			htmlFile.open("index-en.html");
-		}
-		if (htmlFile.is_open())
-		{
-
-			string temp;
-			string output;
-			while (getline(htmlFile, temp)) {
-				output += temp;
-			}
-			sendBuff = "HTTP/1.1 200 OK\r\n";
-			sendBuff += "Cache-Control: no-cache, private\r\n";
-			sendBuff += "Content-Type: text/html\r\n";
-			sendBuff += string("Content-Length: ") += string(to_string(output.size())) += "\r\n\r\n";
-			sendBuff += output;
-		}
-		else
-		{
-			return;
-		}
+		sendBuff = getResponse(i_Server, index);
 	}
 
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
@@ -398,3 +363,53 @@ void getSubType(Server& i_Server, int index)
 		i_Server.sockets[index].quary = buffer.substr(found + 6, 2);
 	}
 }
+
+string getResponse(Server& i_Server, int index)
+{
+	ifstream htmlFile;
+	string htmlPath = "index-en.html";
+	string sendBuff, output;
+	if (i_Server.sockets[index].isQuary)
+	{
+		if (i_Server.sockets[index].quary == "he")
+		{
+			htmlPath = "index-he.html";
+		}
+		else if (i_Server.sockets[index].quary == "en")
+		{
+			htmlPath = "index-en.html";
+		}
+	}
+
+	htmlFile.open(htmlPath);
+	if (htmlFile.is_open())
+	{
+		output = htmlToString(htmlFile);
+		sendBuff = "HTTP/1.1 200 OK\r\n";
+		sendBuff += "Cache-Control: no-cache, private\r\n";
+		sendBuff += "Content-Type: text/html\r\n";
+		sendBuff += string("Content-Length: ") += string(to_string(output.size())) += "\r\n\r\n";
+		sendBuff += output;
+	}
+	else
+	{
+		sendBuff = "HTTP/1.1 404 Not Found\r\n";
+		sendBuff += "Content - Type: text / html\r\n";
+		sendBuff += string("Content-Length: ") += string(to_string(output.size())) += "\r\n\r\n";
+	}
+
+	return sendBuff;
+}
+
+string htmlToString(ifstream& htmlFile)
+{
+	string temp;
+	string output;
+	while (getline(htmlFile, temp)) 
+	{
+		output += temp;
+	}
+
+	return output;
+}
+

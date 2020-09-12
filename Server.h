@@ -29,7 +29,7 @@ const int RECEIVE = 2;
 const int IDLE = 3;
 const int SEND = 4;
 const int SEND_OPTIONS = 1;
-const int SEND_GET_DEFAULT = 2;
+const int SEND_GET = 2;
 const int SEND_HEAD = 3;
 const int SEND_POST = 4;
 const int SEND_PUT = 5;
@@ -67,3 +67,7 @@ bool initServerSide(Server& i_Server);
 void initServer(Server& i_Server);
 
 void getSubType(Server& i_Server, int index);
+
+string getResponse(Server& i_Server, int index);
+
+string htmlToString(ifstream& htmlFile);
