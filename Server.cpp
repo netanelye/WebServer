@@ -14,7 +14,7 @@ bool addSocket(Server& i_Server, SOCKET id, int what)
 			i_Server.socketsCount++;
 			if (ioctlsocket(i_Server.sockets[i].id, FIONBIO, &flag) != 0)
 			{
-				cout << "Time Server: Error at ioctlsocket(): " << WSAGetLastError() << endl;
+				cout << "Web Server: Error at ioctlsocket(): " << WSAGetLastError() << endl;
 			}
 			return true;
 		}
@@ -38,10 +38,10 @@ void acceptConnection(Server& i_Server, int index)
 	SOCKET msgSocket = accept(id, (struct sockaddr*)&from, &fromLen);
 	if (INVALID_SOCKET == msgSocket)
 	{
-		cout << "Time Server: Error at accept(): " << WSAGetLastError() << endl;
+		cout << "Web Server: Error at accept(): " << WSAGetLastError() << endl;
 		return;
 	}
-	cout << "Time Server: Client " << inet_ntoa(from.sin_addr) << ":" << ntohs(from.sin_port) << " is connected." << endl;
+	cout << "Web Server: Client " << inet_ntoa(from.sin_addr) << ":" << ntohs(from.sin_port) << " is connected." << endl;
 
 	//
 	// Set the socket to be in non-blocking mode.
@@ -69,7 +69,7 @@ void receiveMessage(Server& i_Server, int index)
 
 	if (SOCKET_ERROR == bytesRecv)
 	{
-		cout << "Time Server: Error at recv(): " << WSAGetLastError() << endl;
+		cout << "Web Server: Error at recv(): " << WSAGetLastError() << endl;
 		closesocket(msgSocket);
 		removeSocket(i_Server, index);
 		return;
@@ -84,7 +84,7 @@ void receiveMessage(Server& i_Server, int index)
 	else
 	{
 		i_Server.sockets[index].buffer[len + bytesRecv] = '\0'; //add the null-terminating to make it a string
-		cout << "Time Server: Recieved: " << bytesRecv << " bytes of \"" << &i_Server.sockets[index].buffer[len] << "\" message.\n";
+		cout << "Web Server: Recieved: " << bytesRecv << " bytes of \"" << &i_Server.sockets[index].buffer[len] << "\" message.\n";
 
 		i_Server.sockets[index].len += bytesRecv;
 
@@ -92,8 +92,9 @@ void receiveMessage(Server& i_Server, int index)
 		{
 			if (strncmp(i_Server.sockets[index].buffer, "GET", 3) == 0)
 			{
+				getSubType(i_Server, index);
 				i_Server.sockets[index].send = SEND;
-				i_Server.sockets[index].sendSubType = SEND_GET;
+				i_Server.sockets[index].sendSubType = SEND_GET_DEFAULT;
 				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[3], i_Server.sockets[index].len - 3);
 				i_Server.sockets[index].len -= 3;
 				return;
@@ -112,13 +113,31 @@ void sendMessage(Server& i_Server, int index)
 {
 	int bytesSent = 0;
 	string sendBuff;
-
+	ifstream htmlFile; 
 	SOCKET msgSocket = i_Server.sockets[index].id;
-	if (i_Server.sockets[index].sendSubType == SEND_GET)
+	if (i_Server.sockets[index].sendSubType == SEND_GET_DEFAULT)
 	{
-		ifstream htmlFile("index.html");
+		string htmlPath;
+		if (i_Server.sockets[index].isQuary)
+		{
+			if (i_Server.sockets[index].quary == "he")
+			{
+				htmlPath = "index-he.html";
+			}
+			else if (i_Server.sockets[index].quary == "en")
+			{
+				htmlPath = "index-en.html";
+			}
+
+			htmlFile.open(htmlPath.c_str());
+		}
+		else
+		{
+			htmlFile.open("index.html");
+		}
 		if (htmlFile.is_open())
 		{
+
 			string temp;
 			string output;
 			while (getline(htmlFile, temp)) {
@@ -134,16 +153,17 @@ void sendMessage(Server& i_Server, int index)
 		{
 			return;
 		}
+
 	}
 
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
 	if (SOCKET_ERROR == bytesSent)
 	{
-		cout << "Time Server: Error at send(): " << WSAGetLastError() << endl;
+		cout << "Web Server: Error at send(): " << WSAGetLastError() << endl;
 		return;
 	}
 
-	cout << "Time Server: Sent: " << bytesSent << "\\" << sendBuff.size() << " bytes of \"" << sendBuff << "\" message.\n";
+	cout << "Web Server: Sent: " << bytesSent << "\\" << sendBuff.size() << " bytes of \"" << sendBuff << "\" message.\n";
 
 	i_Server.sockets[index].send = IDLE;
 }
@@ -163,7 +183,7 @@ void initWinsock()
 	// The WSACleanup function destructs the use of WS2_32.DLL by a process.
 	if (NO_ERROR != WSAStartup(MAKEWORD(2, 2), &wsaData))
 	{
-		cout << "Time Server: Error at WSAStartup()\n";
+		cout << "Web Server: Error at WSAStartup()\n";
 		return;
 	}
 }
@@ -222,7 +242,7 @@ void run(Server& i_Server)
 		nfd = select(0, &waitRecv, &waitSend, NULL, NULL);
 		if (nfd == SOCKET_ERROR)
 		{
-			cout << "Time Server: Error at select(): " << WSAGetLastError() << endl;
+			cout << "Web Server: Error at select(): " << WSAGetLastError() << endl;
 			WSACleanup();
 			return;
 		}
@@ -261,7 +281,7 @@ void run(Server& i_Server)
 	}
 
 	// Closing connections and Winsock.
-	cout << "Time Server: Closing Connection.\n";
+	cout << "Web Server: Closing Connection.\n";
 	closesocket(i_Server.listenSocket);
 	WSACleanup();
 }
@@ -288,7 +308,7 @@ bool initListenSocket(Server& i_Server)
 	// error number associated with the last error that occurred.
 	if (INVALID_SOCKET == i_Server.listenSocket)
 	{
-		cout << "Time Server: Error at socket(): " << WSAGetLastError() << endl;
+		cout << "Web Server: Error at socket(): " << WSAGetLastError() << endl;
 		WSACleanup();
 		return false;
 	}
@@ -326,7 +346,7 @@ bool initServerSide(Server& i_Server)
 	// sockaddr structure (in bytes).
 	if (SOCKET_ERROR == bind(i_Server.listenSocket, (SOCKADDR*)&serverService, sizeof(serverService)))
 	{
-		cout << "Time Server: Error at bind(): " << WSAGetLastError() << endl;
+		cout << "Web Server: Error at bind(): " << WSAGetLastError() << endl;
 		closesocket(i_Server.listenSocket);
 		WSACleanup();
 		return false;
@@ -337,7 +357,7 @@ bool initServerSide(Server& i_Server)
 	// from other clients). This sets the backlog parameter.
 	if (SOCKET_ERROR == listen(i_Server.listenSocket, 5))
 	{
-		cout << "Time Server: Error at listen(): " << WSAGetLastError() << endl;
+		cout << "Web Server: Error at listen(): " << WSAGetLastError() << endl;
 		closesocket(i_Server.listenSocket);
 		WSACleanup();
 		return false;
@@ -367,4 +387,15 @@ void initRequests(Server& i_Server)
 	i_Server.requests[4].reqAsString = "GET";
 	i_Server.requests[5].reqAsString = "GET";
 	i_Server.requests[6].reqAsString = "GET";
+}
+
+void getSubType(Server& i_Server, int index)
+{
+	string buffer = i_Server.sockets[index].buffer;
+	int found = buffer.find('?');
+	if (found != string::npos)
+	{
+		i_Server.sockets[index].isQuary = true;
+		i_Server.sockets[index].quary = buffer.substr(found + 6, 2);
+	}
 }

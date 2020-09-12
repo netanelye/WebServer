@@ -28,7 +28,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="index-EN.html" />
     <None Include="index-he.html" />
+    <None Include="index-en.htm" />
   </ItemGroup>
 </Project>

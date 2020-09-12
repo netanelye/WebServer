@@ -15,6 +15,8 @@ typedef struct socketState
 	int	recv;			// Receiving?
 	int	send;			// Sending?
 	int sendSubType;	// Sending sub-type
+	bool isQuary;
+	string quary;
 	char buffer[128];
 	int len;
 }SocketState;
@@ -27,7 +29,7 @@ const int RECEIVE = 2;
 const int IDLE = 3;
 const int SEND = 4;
 const int SEND_OPTIONS = 1;
-const int SEND_GET = 2;
+const int SEND_GET_DEFAULT = 2;
 const int SEND_HEAD = 3;
 const int SEND_POST = 4;
 const int SEND_PUT = 5;
@@ -52,8 +54,6 @@ typedef struct server
 }Server;
 
 
-
-
 bool addSocket(Server& i_Server, SOCKET id, int what);
 void removeSocket(Server& i_Server, int index);
 void acceptConnection(Server& i_Server, int index);
@@ -65,3 +65,5 @@ bool initListenSocket(Server& i_Server);
 bool initServerSide(Server& i_Server);
 
 void initServer(Server& i_Server);
+
+void getSubType(Server& i_Server, int index);

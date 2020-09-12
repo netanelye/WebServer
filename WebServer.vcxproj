@@ -146,10 +146,12 @@
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="index-en.htm">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
     <None Include="index-he.html">
       <DeploymentContent>true</DeploymentContent>
     </None>
-    <None Include="index-EN.html" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
