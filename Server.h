@@ -8,6 +8,7 @@ using namespace std;
 #include <winsock2.h>
 #include <string>
 #include <time.h>
+#include "Response.h"
 
 typedef struct socketState
 {
@@ -68,7 +69,10 @@ void initServer(Server& i_Server);
 
 void getSubType(Server& i_Server, int index);
 
-string getResponse(Server& i_Server, int index);
-string postResponse(Server& i_Server, int index);
+Response get(Server& i_Server, int index);
+Response post(Server& i_Server, int index);
 
 string htmlToString(ifstream& htmlFile);
+
+string getPathFromGetReq(string i_Request);
+Response head(Server& i_Server, int index);

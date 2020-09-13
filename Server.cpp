@@ -122,17 +122,17 @@ void sendMessage(Server& i_Server, int index)
 {
 	int bytesSent = 0;
 	string sendBuff;
-	
+	Response response;
 	SOCKET msgSocket = i_Server.sockets[index].id;
 	if (i_Server.sockets[index].sendSubType == SEND_GET)
 	{
-		sendBuff = getResponse(i_Server, index);
+		response = get(i_Server, index);
 	}
 	else if (i_Server.sockets[index].sendSubType == SEND_POST)
 	{
-		sendBuff = postResponse(i_Server, index);
+		response = post(i_Server, index);
 	}
-
+	sendBuff = convertResponseToString(response);
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
 	if (SOCKET_ERROR == bytesSent)
 	{
@@ -377,11 +377,12 @@ void getSubType(Server& i_Server, int index)
 	}
 }
 
-string getResponse(Server& i_Server, int index)
+Response get(Server& i_Server, int index)
 {
 	ifstream htmlFile;
-	string htmlPath = "index-en.html";
-	string sendBuff, output;
+	string htmlPath = getPathFromGetReq(string(i_Server.sockets[index].buffer));
+	string fileAsString;
+	Response outPut;
 	if (i_Server.sockets[index].isQuary)
 	{
 		if (i_Server.sockets[index].quary == "he")
@@ -394,24 +395,27 @@ string getResponse(Server& i_Server, int index)
 		}
 	}
 
+	if (htmlPath == " ")
+	{
+		htmlPath = "index-en.html";
+	}
+
 	htmlFile.open(htmlPath);
 	if (htmlFile.is_open())
 	{
-		output = htmlToString(htmlFile);
-		sendBuff = "HTTP/1.1 200 OK\r\n";
-		sendBuff += "Cache-Control: no-cache, private\r\n";
-		sendBuff += "Content-Type: text/html\r\n";
-		sendBuff += string("Content-Length: ") += string(to_string(output.size())) += "\r\n\r\n";
-		sendBuff += output;
+		fileAsString = htmlToString(htmlFile);
+		outPut.code = ok;
+		outPut.cacheControl = "no-cache, private";
+		outPut.contentLength = fileAsString.size();
+		outPut.body = fileAsString;
 	}
 	else
 	{
-		sendBuff = "HTTP/1.1 404 Not Found\r\n";
-		sendBuff += "Content - Type: text / html\r\n";
-		sendBuff += string("Content-Length: ") += string(to_string(output.size())) += "\r\n\r\n";
+		outPut.code = notFound;
+		outPut.contentLength = 0;
 	}
 
-	return sendBuff;
+	return outPut;
 }
 
 string htmlToString(ifstream& htmlFile)
@@ -426,9 +430,37 @@ string htmlToString(ifstream& htmlFile)
 	return output;
 }
 
-
-string postResponse(Server& i_Server, int index)
+string getPathFromGetReq(string i_Request)
 {
-	string sendBuff = "HTTP / 1.1 200 OK\r\n";
-	return sendBuff;
+	string path;
+	size_t posSlash = i_Request.find('/');
+	if (posSlash != string::npos)
+	{
+		path = i_Request.substr(posSlash);
+		size_t posSpace = path.find(' ');
+		if (posSpace != string::npos)
+		{
+			path = path.substr(posSlash, posSpace);
+		}
+		else
+		{
+			path = "";
+		}
+	}
+	
+	return path;
+}
+
+Response post(Server& i_Server, int index)
+{
+	Response output = get(i_Server,index);
+	output.code = ok;
+	return output;
+}
+
+Response head(Server& i_Server, int index)
+{
+	Response output = get(i_Server, index);
+	output.body = "";
+	return output;
 }
