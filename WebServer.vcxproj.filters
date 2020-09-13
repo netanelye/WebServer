@@ -38,7 +38,7 @@
     <None Include="index-en.html" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\Downloads\html-Icon.png">
+    <Image Include="icon.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
