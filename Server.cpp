@@ -101,9 +101,16 @@ void receiveMessage(Server& i_Server, int index)
 			}
 			if (strncmp(i_Server.sockets[index].buffer, "POST", 4) == 0)
 			{
-				getSubType(i_Server, index);
 				i_Server.sockets[index].send = SEND;
 				i_Server.sockets[index].sendSubType = SEND_POST;
+				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[4], i_Server.sockets[index].len - 4);
+				i_Server.sockets[index].len -= 4;
+				return;
+			}
+			if (strncmp(i_Server.sockets[index].buffer, "HEAD", 4) == 0)
+			{
+				i_Server.sockets[index].send = SEND;
+				i_Server.sockets[index].sendSubType = SEND_HEAD;
 				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[4], i_Server.sockets[index].len - 4);
 				i_Server.sockets[index].len -= 4;
 				return;
@@ -131,6 +138,10 @@ void sendMessage(Server& i_Server, int index)
 	else if (i_Server.sockets[index].sendSubType == SEND_POST)
 	{
 		response = post(i_Server, index);
+	}
+	else if (i_Server.sockets[index].sendSubType == SEND_HEAD)
+	{
+		response = head(i_Server, index);
 	}
 	sendBuff = convertResponseToString(response);
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
@@ -453,8 +464,19 @@ string getPathFromGetReq(string i_Request)
 
 Response post(Server& i_Server, int index)
 {
-	Response output = get(i_Server,index);
-	output.code = ok;
+	Response output;
+	string x = i_Server.sockets[index].buffer;
+	string name = "yourName";
+	size_t namePos = x.find(name);
+	if (namePos != string::npos)
+	{
+		x = x.substr(namePos);
+		size_t posEqual = x.find('=');
+		if (posEqual != string::npos)
+		{
+			x = x.substr(posEqual +1);
+		}
+	}
 	return output;
 }
 
