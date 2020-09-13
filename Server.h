@@ -17,7 +17,7 @@ typedef struct socketState
 	int sendSubType;	// Sending sub-type
 	bool isQuary;
 	string quary;
-	char buffer[128];
+	char buffer[1024];
 	int len;
 }SocketState;
 
@@ -69,5 +69,6 @@ void initServer(Server& i_Server);
 void getSubType(Server& i_Server, int index);
 
 string getResponse(Server& i_Server, int index);
+string postResponse(Server& i_Server, int index);
 
 string htmlToString(ifstream& htmlFile);

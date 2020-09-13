@@ -99,6 +99,15 @@ void receiveMessage(Server& i_Server, int index)
 				i_Server.sockets[index].len -= 3;
 				return;
 			}
+			if (strncmp(i_Server.sockets[index].buffer, "POST", 4) == 0)
+			{
+				getSubType(i_Server, index);
+				i_Server.sockets[index].send = SEND;
+				i_Server.sockets[index].sendSubType = SEND_POST;
+				memcpy(i_Server.sockets[index].buffer, &i_Server.sockets[index].buffer[4], i_Server.sockets[index].len - 4);
+				i_Server.sockets[index].len -= 4;
+				return;
+			}
 			else if (strncmp(i_Server.sockets[index].buffer, "Exit", 4) == 0)
 			{
 				closesocket(msgSocket);
@@ -118,6 +127,10 @@ void sendMessage(Server& i_Server, int index)
 	if (i_Server.sockets[index].sendSubType == SEND_GET)
 	{
 		sendBuff = getResponse(i_Server, index);
+	}
+	else if (i_Server.sockets[index].sendSubType == SEND_POST)
+	{
+		sendBuff = postResponse(i_Server, index);
 	}
 
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
@@ -296,7 +309,7 @@ bool initServerSide(Server& i_Server)
 	// inet_addr (Iternet address) is used to convert a string (char *) 
 	// into unsigned long.
 	// The IP address is INADDR_ANY to accept connections on all interfaces.
-	serverService.sin_addr.s_addr = INADDR_ANY; //inet_addr("10.100.102.12")
+	serverService.sin_addr.s_addr = INADDR_ANY;//inet_addr("10.100.102.12")
 	// IP Port. The htons (host to network - short) function converts an
 	// unsigned short from host to TCP/IP network byte order 
 	// (which is big-endian).
@@ -413,3 +426,9 @@ string htmlToString(ifstream& htmlFile)
 	return output;
 }
 
+
+string postResponse(Server& i_Server, int index)
+{
+	string sendBuff = "HTTP / 1.1 200 OK\r\n";
+	return sendBuff;
+}
