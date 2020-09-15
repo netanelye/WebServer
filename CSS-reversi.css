@@ -1,0 +1,266 @@
+#gtable
+{
+    background: black;
+    margin-left: auto;
+    margin-right: auto;
+    width: 55%;
+    height: 55%;
+}
+#player
+{
+  font-size: auto;
+  color: chartreuse;
+  font: bold;
+}
+#quitButton
+{
+  margin-inline-end: 20%;
+}
+
+#score
+{
+    color: #cccccc;
+    text-align: center;
+}
+.score
+{
+    size: inherit;
+}
+
+.col
+{
+    width: auto;
+    border-width: 2px;
+    border-color: azure;
+    position: relative;
+}
+
+.row
+{
+    height: auto;
+    border-width: 2px;
+    border-color: azure;
+    position: relative;
+    
+}
+
+.dotWhite {
+
+    height: 100%;
+    width: 100%;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dotBlack {
+
+    height: 100%;
+    width: 100%;
+    background-color: #000000;
+    border-radius: 50%;
+    display: inline-block;
+  }
+body {
+    background-image: url("https://media0.giphy.com/media/tN638m30ZEz0A/200w.webp?cid=790b76115ca699ab69367539772a5c20");
+    background-color: #cccccc
+}
+  @media (min-width: 1300px)
+  {
+    #gtable
+    {
+        background: black;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: auto;
+        width: 70vh;
+        height: 70vh;
+    }
+    .col
+    {
+        width: auto;
+        border-width: 2px;
+        border-color: azure;
+        position: relative;
+    }
+    
+    .row
+    {
+        height: auto;
+        border-width: 2px;
+        border-color: azure;
+        position: relative;
+        
+    }
+    
+    .dotWhite {
+        height: 100%;
+        width: 100%;
+      background-color: #ffffff;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    .dotBlack {
+   
+        height: 100%;
+        width: 100%;
+        background-color: #000000;
+        border-radius: 50%;
+        display: inline-block;
+      }
+    
+  }
+
+    
+    /* The menu (background) */
+    .menu {
+        display: block; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        padding-top: 100px; /* Location of the box */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgb(0,0,0); /* Fallback color */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+      }
+      
+      .dropbtn {
+        background-color: #3498DB;
+        color: white;
+        padding: 16px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+      }
+      
+      /* Dropdown button on hover & focus */
+      .dropbtn:hover, .dropbtn:focus {
+        background-color: #2980B9;
+      }
+      
+      /* The container <div> - needed to position the dropdown content */
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+      
+      /* Dropdown Content (Hidden by Default) */
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f1f1f1;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+      }
+      
+      /* Links inside the dropdown */
+      .dropdown-content a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+      }
+      
+      /* Change color of dropdown links on hover */
+      .dropdown-content a:hover {background-color: #ddd}
+      
+      /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+      .show {display:block;}
+
+      /* menu Content */
+      .menu-content {
+        position: relative;
+        background-color: #fefefe;
+        margin: auto;
+        padding: 0;
+        height: auto;
+        border: 1px solid #888;
+        width: 80%;
+        
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+        -webkit-animation-name: animatetop;
+        -webkit-animation-duration: 0.4s;
+        animation-name: animatetop;
+        animation-duration: 0.4s
+      }
+      
+      /* Add Animation */
+      @-webkit-keyframes animatetop {
+        from {top:-300px; opacity:0} 
+        to {top:0; opacity:1}
+      }
+      
+      @keyframes animatetop {
+        from {top:-300px; opacity:0}
+        to {top:0; opacity:1}
+      }
+      
+#quit
+{
+    visibility: visible;
+}
+
+#cancel
+{
+    visibility: hidden;
+}
+      /* The Close Button */
+      .close {
+        color: white;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+      
+      .close:hover,
+      .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      
+      .menu-header {
+        padding: 2px 16px;
+        background-color: #5cb85c;
+        color: white;
+      }
+      
+      .menu-body {padding: 2px 16px;}
+      
+      .menu-footer {
+        padding: 2px 16px;
+        background-color: #5cb85c;
+        color: white;
+      }
+     
+      @-webkit-keyframes bulge {
+       /* 0% {
+          transform: scale(0.33);
+          background-color:darkgray;
+        }
+        10% {
+          transform: scale(0.66);
+          background-color:gray;
+        }*/
+        40% {
+          transform: scale(1);
+          background-color:black;
+        }
+        100% {
+          transform: scale(1);
+        }
+      
+      }
+      .pulse
+      {
+        -webkit-animation-duration: 0.005s;
+        -webkit-animation-name: bulge;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: ease-in;
+      }
+    

@@ -1,0 +1,76 @@
+<link rel="stylesheet" type="text/css" href="CSS-reversi.css">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body onload="startTime()">
+    <div id="mymenu" class="menu">
+        <!-- menu content -->
+        <div class="menu-content">
+            <div class="menu-header" id="menu-header">
+                <span class="close" id="x" onclick="closeTab()">&times;</span>
+                <h2>Game main menu</h2>
+            </div>
+            <div class="menu-body">
+                <p>Please choose a table size and start the game...</p>
+                <button id="start" onclick="hereWeGo()">Start</button>
+                <div class="dropdown">
+                    <button onclick="openMenu()" id="dropbtn">10</button>
+                    <div id="myDropdown" class="dropdown-content">
+                        <p onclick="changeTo(6)">6</p>
+                        <p onclick="changeTo(8)">8</p>
+                        <p onclick="changeTo(10)">10</p>
+                        <p onclick="changeTo(12)">12</p>
+                        <p onclick="changeTo(14)">14</p>
+                        <p onclick="changeTo(16)">16</p>
+                    </div>
+                </div>
+                <p>Or just click here to exit</p>
+                <button id="quit" onclick="closeTab()">Quit</button>
+                <button id="cancel" onclick="closePopup()">cancel</button>
+            </div>
+            <div class="menu-footer">
+                <h3 id="winnerBar">I AM THE BEST GAME EVER!!</h3>
+            </div>
+        </div>
+
+    </div>
+    <div id="game">
+        <table id="score">
+            <tr class="score row">
+                <td class="score cell" id="menuButton"></td>
+                <td class="score cell" id="quitButton"></td>
+                <td class="score cell" id="player">Black player's turn</td>
+            <tr class="score row">
+                <td class="score cell" id="roundCount"></td>
+
+            </tr>
+            <tr class="score row">
+                <td class="score cell" id="time"></td>
+            </tr>
+            <tr class="score row">
+                <td class="score cell" id="whiteScore"></td>
+                <td class="score cell" id="blackScore"></td>
+            </tr>
+            <tr class="score row">
+                <td class="score cell" id="avregeTimeBlack">TIME Black: </td>
+            </tr>
+            <tr class="score row">
+                <td class="score cell" id="avregeTimeWhite">TIME White: </td>
+            </tr>
+            <tr class="score row">
+                <td class="score cell" id="blackScore2">Black Score 2 : </td>
+            </tr>
+            <tr class="score row">
+                <td class="score cell" id="whiteScore2">White Score 2 : </td>
+            </tr>
+        </table>
+    </div>
+    <table id="gtable">
+
+    </table>
+
+    <script src="JavaScript-reversi.js"></script>
+    </div>
+</body>
