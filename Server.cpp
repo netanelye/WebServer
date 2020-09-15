@@ -398,31 +398,30 @@ Response get(Server& i_Server, int index)
 	{
 		if (i_Server.sockets[index].quary == "he")
 		{
-			htmlPath = "index-he.html";
+			htmlPath = "index.html";
 		}
 		else if (i_Server.sockets[index].quary == "en")
 		{
-			htmlPath = "index-en.html";
+			htmlPath = "index.html";
 		}
 	}
 
 	if (htmlPath == " ")
 	{
-		htmlPath = "index-en.html";
+		htmlPath = "index.html";
 	}
 
 	htmlFile.open(htmlPath);
 	if (htmlFile.is_open())
 	{
 		fileAsString = htmlToString(htmlFile);
-		outPut.code = ok;
-		outPut.cacheControl = "no-cache, private";
+		outPut.code = OK;
 		outPut.contentLength = fileAsString.size();
 		outPut.body = fileAsString;
 	}
 	else
 	{
-		outPut.code = notFound;
+		outPut.code = NotFound;
 		outPut.contentLength = 0;
 	}
 
@@ -465,18 +464,7 @@ string getPathFromGetReq(string i_Request)
 Response post(Server& i_Server, int index)
 {
 	Response output;
-	string x = i_Server.sockets[index].buffer;
-	string name = "yourName";
-	size_t namePos = x.find(name);
-	if (namePos != string::npos)
-	{
-		x = x.substr(namePos);
-		size_t posEqual = x.find('=');
-		if (posEqual != string::npos)
-		{
-			x = x.substr(posEqual +1);
-		}
-	}
+	output.code = Continue;
 	return output;
 }
 

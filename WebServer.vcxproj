@@ -148,6 +148,9 @@
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\Downloads\Small-Web-Game-master\Small-Web-Game-master\reversi game\CSS-reversi.css" />
+    <None Include="..\..\..\Downloads\Small-Web-Game-master\Small-Web-Game-master\reversi game\index.html" />
+    <None Include="..\..\..\Downloads\Small-Web-Game-master\Small-Web-Game-master\reversi game\JavaScript-reversi.js" />
     <None Include="index-en.html">
       <DeploymentContent>true</DeploymentContent>
     </None>

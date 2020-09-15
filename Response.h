@@ -4,7 +4,7 @@
 using namespace std;
 
 
-enum eCode { ok = 200, notFound = 404};
+enum eCode { Continue = 100, OK = 200, Created = 201, Accepted = 202, NotFound = 404};
 struct Response
 {
 	string HTTPVersion = "HTTP/1.1";
@@ -17,7 +17,7 @@ struct Response
 	string contentType = "text/html";
 	string body;
 	//string allow = "";
-	string cacheControl;
+	string cacheControl = "no-cache, private";
 	static string newLine;
 };
 

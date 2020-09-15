@@ -20,11 +20,21 @@ string eCodeToString(eCode i_Code)
 	string output;
 	switch (i_Code)
 	{
-	case ok:
+	case Continue:
+		output = "Continue";
+		break;
+	case OK:
 		output = "OK";
 		break;
-	case notFound:
+	case NotFound:
 		output = "Not Found";
+		break;
+	case Created:
+		output = "Created";
+		break;
+	case Accepted:
+		output = "Accepted";
+		break;
 	}
 	return output;
 }
