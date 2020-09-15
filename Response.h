@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <string>
+
 using namespace std;
 
 
@@ -17,9 +18,11 @@ struct Response
 	string contentType = "text/html";
 	string body;
 	//string allow = "";
-	string cacheControl = "no-cache, private";
+	string cacheControl = "no-cache, private";// delete
 	static string newLine;
 };
+
+
 
 string convertResponseToString(Response& i_Response);
 string eCodeToString(eCode i_Code);

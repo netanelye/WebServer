@@ -8,6 +8,7 @@ using namespace std;
 #include <winsock2.h>
 #include <string>
 #include <time.h>
+#include <map>
 #include "Response.h"
 
 typedef struct socketState
@@ -20,6 +21,7 @@ typedef struct socketState
 	string quary;
 	char buffer[1024];
 	int len;
+	map<string, string> response;
 }SocketState;
 
 const int TIME_PORT = 80;
@@ -76,3 +78,5 @@ string htmlToString(ifstream& htmlFile);
 
 string getPathFromGetReq(string i_Request);
 Response head(Server& i_Server, int index);
+void parseResponse(Server& i_Server, int index);
+void deleteBegingSpaces(string& i_Input);

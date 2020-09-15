@@ -144,6 +144,7 @@
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="request.h" />
     <ClInclude Include="Response.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>

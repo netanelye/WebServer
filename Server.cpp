@@ -87,7 +87,7 @@ void receiveMessage(Server& i_Server, int index)
 		cout << "Web Server: Recieved: " << bytesRecv << " bytes of \"" << &i_Server.sockets[index].buffer[len] << "\" message.\n";
 
 		i_Server.sockets[index].len += bytesRecv;
-
+		parseResponse(i_Server, index);
 		if (i_Server.sockets[index].len > 0)
 		{
 			if (strncmp(i_Server.sockets[index].buffer, "GET", 3) == 0)
@@ -434,7 +434,7 @@ string htmlToString(ifstream& htmlFile)
 	string output;
 	while (getline(htmlFile, temp)) 
 	{
-		output += temp;
+		output += temp += Response::newLine;
 	}
 
 	return output;
@@ -473,4 +473,64 @@ Response head(Server& i_Server, int index)
 	Response output = get(i_Server, index);
 	output.body = "";
 	return output;
+}
+
+void parseResponse(Server& i_Server, int index)
+{
+	string buffer = i_Server.sockets[index].buffer;
+	map<string, string>* response = &i_Server.sockets[index].response;
+
+	deleteBegingSpaces(buffer);
+	size_t pos = buffer.find(" ");
+	if (pos != string::npos)
+	{
+		string method = buffer.substr(0, pos);
+		buffer.erase(0, pos);
+		response->insert(make_pair("Method", method));
+	}
+	deleteBegingSpaces(buffer);
+	pos = buffer.find(" ");
+	if (pos != string::npos)
+	{
+		string path = buffer.substr(0, pos);
+		buffer.erase(0, pos);
+		response->insert(make_pair("Path", path));
+	}
+	deleteBegingSpaces(buffer);
+	pos = buffer.find("\r");
+	if (pos != string::npos)
+	{
+		string version = buffer.substr(0, pos);
+		buffer.erase(0, pos + 2);
+		response->insert(make_pair("Version", version));
+	}
+
+	while (buffer.size() > 2)
+	{
+		pos = buffer.find(":");
+		if (pos != string::npos)
+		{
+			string key = buffer.substr(0, pos);
+			buffer.erase(0, pos + 2);
+			pos = buffer.find("\r");
+			if (pos != string::npos)
+			{
+				string value = buffer.substr(0, pos);
+				buffer.erase(0, pos + 2);
+				response->insert(make_pair(key, value));
+			}
+		}
+	}
+	int x = 5;
+
+}
+
+void deleteBegingSpaces(string& i_Input)
+{
+	size_t pos = i_Input.find_first_not_of(" ");
+	if (pos != string::npos)
+	{
+		i_Input = i_Input.substr(pos);
+	}
+
 }
