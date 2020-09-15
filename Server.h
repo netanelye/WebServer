@@ -9,6 +9,7 @@ using namespace std;
 #include <string>
 #include <time.h>
 #include <map>
+#include <queue>
 #include "Response.h"
 
 typedef struct socketState
@@ -20,8 +21,8 @@ typedef struct socketState
 	bool isQuary;
 	string quary;
 	char buffer[1024];
-	int len;
-	map<string, string> response;
+	int len; 
+	queue< map<string, string>> requests;
 }SocketState;
 
 const int TIME_PORT = 80;

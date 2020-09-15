@@ -14,6 +14,3 @@ typedef struct request
 	time_t m_Date;
 	string body;
 };
-
-
-void parseRequest(;
