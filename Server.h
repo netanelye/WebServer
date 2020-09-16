@@ -22,7 +22,8 @@ typedef struct socketState
 	string quary;
 	char buffer[1024];
 	int len; 
-	queue< map<string, string>> requests;
+	map<string, string> request;
+
 }SocketState;
 
 const int TIME_PORT = 80;
@@ -72,12 +73,16 @@ void initServer(Server& i_Server);
 
 void getSubType(Server& i_Server, int index);
 
-Response get(Server& i_Server, int index);
-Response post(Server& i_Server, int index);
-
+Response generateGetResponse(Server& i_Server, int index);
+Response generatePostResponse(Server& i_Server, int index);
+Response generateHeadResponse(Server& i_Server, int index);
+Response generatePutResponse(Server& i_Server, int index);
+Response generateDeleteResponse(Server& i_Server, int index);
+Response generateOptionsResponse(Server& i_Server, int index);
+Response generateTraceResponse(Server& i_Server, int index);
 string htmlToString(ifstream& htmlFile);
 
-string getPathFromGetReq(string i_Request);
-Response head(Server& i_Server, int index);
+
 void parseResponse(Server& i_Server, int index);
 void deleteBegingSpaces(string& i_Input);
+void mapInsert(map<string, string>& i_Request, string i_Key, string i_Value);

@@ -88,9 +88,9 @@ void receiveMessage(Server& i_Server, int index)
 
 		i_Server.sockets[index].len += bytesRecv;
 		if (i_Server.sockets[index].len > 0)
-		{
+		{			
 			parseResponse(i_Server, index);
-			if (i_Server.sockets[index].requests.front().find("Method") != i_Server.sockets[index].requests.front().end())
+			if (i_Server.sockets[index].request.find("Method") != i_Server.sockets[index].request.end())
 			{
 				i_Server.sockets[index].send = SEND;
 			}
@@ -111,22 +111,39 @@ void sendMessage(Server& i_Server, int index)
 	string sendBuff;
 	Response response;
 	SOCKET msgSocket = i_Server.sockets[index].id;
-	if (i_Server.sockets[index].requests.front()["Method"] == "GET")
+	string method = i_Server.sockets[index].request["Method"];
+	if (method == "GET")
 	{
-		getSubType(i_Server, index);
-		response = get(i_Server, index);
+		response = generateGetResponse(i_Server, index);
 	}
-	if (i_Server.sockets[index].sendSubType == SEND_GET)
+	else if (method == "POST")
 	{
-		response = get(i_Server, index);
+		response = generatePostResponse(i_Server, index);
 	}
-	else if (i_Server.sockets[index].sendSubType == SEND_POST)
+	else if (method == "HEAD")
 	{
-		response = post(i_Server, index);
+		response = generateHeadResponse(i_Server, index);
 	}
-	else if (i_Server.sockets[index].sendSubType == SEND_HEAD)
+	else if (method == "PUT")
 	{
-		response = head(i_Server, index);
+		response = generatePutResponse(i_Server, index);
+	}
+	else if (method == "DELETE")
+	{
+		response = generateDeleteResponse(i_Server, index);
+	}
+	else if (method == "OPTIONS")
+	{
+		response = generateOptionsResponse(i_Server, index);
+	}
+	else if (method == "TRACE")
+	{
+		response = generateTraceResponse(i_Server, index);
+	}
+	else
+	{
+		//method not allowd 
+		return;
 	}
 	sendBuff = convertResponseToString(response);
 	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
@@ -139,7 +156,7 @@ void sendMessage(Server& i_Server, int index)
 	cout << "Web Server: Sent: " << bytesSent << "\\" << sendBuff.size() << " bytes of \"" << sendBuff << "\" message.\n";
 
 	i_Server.sockets[index].send = IDLE;
-	i_Server.sockets[index].requests.pop();
+	//i_Server.sockets[index].requests.pop();
 }
 
 void initWinsock()
@@ -177,7 +194,6 @@ void run(Server& i_Server)
 	}
 
 	addSocket(i_Server, i_Server.listenSocket, LISTEN);
-
 	// Accept connections and handles them one by one.
 	while (true)
 	{
@@ -374,35 +390,49 @@ void getSubType(Server& i_Server, int index)
 	}
 }
 
-Response get(Server& i_Server, int index)
+
+string htmlToString(ifstream& htmlFile)
 {
+	string temp;
+	string output;
+	while (getline(htmlFile, temp)) 
+	{
+		output += temp += Response::newLine;
+	}
+
+	return output;
+}
+
+
+Response generateGetResponse(Server& i_Server, int index)
+{
+	getSubType(i_Server, index);
 	ifstream htmlFile;
-	string htmlPath = i_Server.sockets[index].requests.front()["Path"];
+	string htmlPath = i_Server.sockets[index].request["Path"];
 	if (htmlPath.empty())
 	{
 		return Response();
 	}
 	htmlPath.erase(0, 1);
-	cout << "_________________________" << htmlPath << endl;
 	string fileAsString;
 	Response outPut;
 	if (i_Server.sockets[index].isQuary)
 	{
 		if (i_Server.sockets[index].quary == "he")
 		{
-			htmlPath = "index.html";
+			htmlPath = "index-he.html";
 		}
 		else if (i_Server.sockets[index].quary == "en")
 		{
-			htmlPath = "index.html";
+			htmlPath = "index-en.html";
 		}
 	}
 
 	if (htmlPath == "")
 	{
-		htmlPath = "index.html";
+		htmlPath = "index-en.html";
 	}
-	
+
 	htmlFile.open(htmlPath);
 	if (htmlFile.is_open())
 	{
@@ -420,36 +450,57 @@ Response get(Server& i_Server, int index)
 	return outPut;
 }
 
-string htmlToString(ifstream& htmlFile)
+Response generatePostResponse(Server& i_Server, int index)
 {
-	string temp;
-	string output;
-	while (getline(htmlFile, temp)) 
-	{
-		output += temp += Response::newLine;
-	}
-
-	return output;
-}
-
-Response post(Server& i_Server, int index)
-{
-	Response output;
+	Response output = generateGetResponse(i_Server, index);
 	output.code = Continue;
 	return output;
 }
 
-Response head(Server& i_Server, int index)
+Response generateHeadResponse(Server& i_Server, int index)
 {
-	Response output = get(i_Server, index);
+	Response output = generateGetResponse(i_Server, index);
 	output.body = "";
+	output.contentLength = 0;
+	return output;
+}
+
+Response generatePutResponse(Server& i_Server, int index)
+{
+	Response output = generateGetResponse(i_Server, index);
+	output.body = "";
+	output.contentLength = 0;
+	return output;
+}
+
+Response generateDeleteResponse(Server& i_Server, int index)
+{
+	Response output = generateGetResponse(i_Server, index);
+	output.body = "";
+	output.contentLength = 0;
+	return output;
+}
+
+Response generateOptionsResponse(Server& i_Server, int index)
+{
+	Response output = generateGetResponse(i_Server, index);
+	output.body = "";
+	output.contentLength = 0;
+	return output;
+}
+
+Response generateTraceResponse(Server& i_Server, int index)
+{
+	Response output = generateGetResponse(i_Server, index);
+	output.body = "";
+	output.contentLength = 0;
 	return output;
 }
 
 void parseResponse(Server& i_Server, int index)
 {
 	string buffer = i_Server.sockets[index].buffer;
-	map<string, string> request;
+	map<string, string>& request = i_Server.sockets[index].request;
 
 	deleteBegingSpaces(buffer);
 	size_t pos = buffer.find(" ");
@@ -457,7 +508,7 @@ void parseResponse(Server& i_Server, int index)
 	{
 		string method = buffer.substr(0, pos);
 		buffer.erase(0, pos);
-		request.insert(make_pair("Method", method));
+		mapInsert(request, "Method", method);
 	}
 
 	deleteBegingSpaces(buffer);
@@ -466,7 +517,7 @@ void parseResponse(Server& i_Server, int index)
 	{
 		string path = buffer.substr(0, pos);
 		buffer.erase(0, pos);
-		request.insert(make_pair("Path", path));
+		mapInsert(request, "Path", path);
 	}
 
 	deleteBegingSpaces(buffer);
@@ -475,7 +526,7 @@ void parseResponse(Server& i_Server, int index)
 	{
 		string version = buffer.substr(0, pos);
 		buffer.erase(0, pos + 2);
-		request.insert(make_pair("Version", version));
+		mapInsert(request, "Version", version);
 	}
 
 	while (buffer.size() > 2)
@@ -490,12 +541,10 @@ void parseResponse(Server& i_Server, int index)
 			{
 				string value = buffer.substr(0, pos);
 				buffer.erase(0, pos + 2);
-				request.insert(make_pair(key, value));
+				mapInsert(request, key, value);
 			}
 		}
 	}
-
-	i_Server.sockets[index].requests.push(request);
 
 }
 
@@ -507,4 +556,11 @@ void deleteBegingSpaces(string& i_Input)
 		i_Input = i_Input.substr(pos);
 	}
 
+}
+
+void mapInsert(map<string, string>& i_Request ,string i_Key, string i_Value)
+{
+	map<string, string>::iterator it;
+	it = i_Request.find(i_Key);
+	i_Request[i_Key] = i_Value;
 }
