@@ -82,7 +82,7 @@ Response generateOptionsResponse(Server& i_Server, int index);
 Response generateTraceResponse(Server& i_Server, int index);
 string htmlToString(ifstream& htmlFile);
 
-
+void printBodyParameters(Server& i_Server, int index);
 void parseResponse(Server& i_Server, int index);
 void deleteBegingSpaces(string& i_Input);
 void mapInsert(map<string, string>& i_Request, string i_Key, string i_Value);

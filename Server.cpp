@@ -453,7 +453,8 @@ Response generateGetResponse(Server& i_Server, int index)
 Response generatePostResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	output.code = Continue;
+	printBodyParameters(i_Server, index);
+	output.code = OK;
 	return output;
 }
 
@@ -497,6 +498,17 @@ Response generateTraceResponse(Server& i_Server, int index)
 	return output;
 }
 
+void printBodyParameters(Server& i_Server, int index)
+{
+	string buffer = i_Server.sockets[index].buffer;
+	size_t pos = buffer.find("\r\n\r\n");
+	if (pos != string::npos)
+	{
+		string param = buffer.substr(pos, buffer.size());
+		buffer.erase(0, pos);
+	}
+}
+
 void parseResponse(Server& i_Server, int index)
 {
 	string buffer = i_Server.sockets[index].buffer;
@@ -529,7 +541,7 @@ void parseResponse(Server& i_Server, int index)
 		mapInsert(request, "Version", version);
 	}
 
-	while (buffer.size() > 2)
+	while (buffer.size() > 1 && buffer[0] != '\r')
 	{
 		pos = buffer.find(":");
 		if (pos != string::npos)
