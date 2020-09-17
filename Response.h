@@ -18,12 +18,11 @@ struct Response
 	int contentLength = 0;
 	string contentType = "text/html";
 	string body;
-	string allow;
+	string allow; //?
 	string cacheControl = "no-cache, private";// delete
-	static string newLine;
+	static const string newLine;
+	static const string allowMethods;
 };
-
-
 
 string convertResponseToString(Response& i_Response);
 string eCodeToString(eCode i_Code);

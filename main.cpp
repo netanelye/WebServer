@@ -2,7 +2,7 @@
 #include"Server.h"
 using namespace std;
 
-void main()
+int main()
 {
 	Server server;
 	run(server);

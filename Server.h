@@ -23,7 +23,8 @@ typedef struct socketState
 	char buffer[1024];
 	int len; 
 	map<string, string> request;
-
+	bool Continue;
+	string continueTo;
 }SocketState;
 
 const int TIME_PORT = 80;
@@ -86,4 +87,5 @@ void printBodyParameters(Server& i_Server, int index);
 void parseResponse(Server& i_Server, int index);
 void deleteBegingSpaces(string& i_Input);
 string GetSubHeader(string& buffer, string lookFor, int offset);
+bool isBodyExist(string i_buffer);
 void mapInsert(map<string, string>& i_Request, string i_Key, string i_Value);

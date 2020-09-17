@@ -365,17 +365,17 @@ void initRequests(Server& i_Server)
 	const int SEND_GET = 2;
 	const int SEND_HEAD = 3;
 	const int SEND_POST = 4;
-	const int SEND_PUT = 5;
-	const int SEND_DELETE = 6;
-	const int SEND_TRACE = 7;
+const int SEND_PUT = 5;
+const int SEND_DELETE = 6;
+const int SEND_TRACE = 7;
 
-	i_Server.requests[0].reqAsString = "GET";
-	i_Server.requests[1].reqAsString = "POST";
-	i_Server.requests[2].reqAsString = "GET";
-	i_Server.requests[3].reqAsString = "GET";
-	i_Server.requests[4].reqAsString = "GET";
-	i_Server.requests[5].reqAsString = "GET";
-	i_Server.requests[6].reqAsString = "GET";
+i_Server.requests[0].reqAsString = "GET";
+i_Server.requests[1].reqAsString = "POST";
+i_Server.requests[2].reqAsString = "GET";
+i_Server.requests[3].reqAsString = "GET";
+i_Server.requests[4].reqAsString = "GET";
+i_Server.requests[5].reqAsString = "GET";
+i_Server.requests[6].reqAsString = "GET";
 }
 
 void getSubType(Server& i_Server, int index)
@@ -389,19 +389,17 @@ void getSubType(Server& i_Server, int index)
 	}
 }
 
-
 string htmlToString(ifstream& htmlFile)
 {
 	string temp;
 	string output;
-	while (getline(htmlFile, temp)) 
+	while (getline(htmlFile, temp))
 	{
 		output += temp += Response::newLine;
 	}
 
 	return output;
 }
-
 
 Response generateGetResponse(Server& i_Server, int index)
 {
@@ -459,15 +457,32 @@ Response generatePostResponse(Server& i_Server, int index)
 Response generateHeadResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	output.body = "";
+	output.body.clear();
 	return output;
 }
 
 Response generatePutResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	output.body = "";
-	output.contentLength = 0;
+	
+	if(i_Server.sockets[index].request["Expect"] == "100-continue")
+	{
+		Continue = true;
+		continueTo = "PUT";
+		output.code = Continue;
+	}
+	else if (Continue)
+	{
+		// move the full message to file
+		Continue = false;
+	}
+	else
+	{
+		// move body to file
+		output.code = OK;
+	}
+	
+	
 	return output;
 }
 
@@ -482,8 +497,7 @@ Response generateDeleteResponse(Server& i_Server, int index)
 Response generateOptionsResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	output.body = "";
-	output.contentLength = 0;
+	output.allow = Response::allowMethods;
 	return output;
 }
 
@@ -538,7 +552,7 @@ void parseResponse(Server& i_Server, int index)
 	string version = GetSubHeader(buffer, "\r", 2);
 	mapInsert(request, "Version", version);
 
-	size_t pos;
+
 	while (buffer.size() > 1 && buffer[0] != '\r')
 	{
 		string key = GetSubHeader(buffer, ":", 2); 
@@ -550,20 +564,6 @@ void parseResponse(Server& i_Server, int index)
 				mapInsert(request, key, value);
 			}
 		}
-
-		/*pos = buffer.find(":");
-		if (pos != string::npos)
-		{
-			string key = buffer.substr(0, pos);
-			buffer.erase(0, pos + 2);
-			pos = buffer.find("\r");
-			if (pos != string::npos)
-			{
-				string value = buffer.substr(0, pos);
-				buffer.erase(0, pos + 2);
-				mapInsert(request, key, value);
-			}
-		}*/
 	}
 	printBodyParameters(i_Server, index);
 }
@@ -595,4 +595,10 @@ void mapInsert(map<string, string>& i_Request ,string i_Key, string i_Value)
 	map<string, string>::iterator it;
 	it = i_Request.find(i_Key);
 	i_Request[i_Key] = i_Value;
+}
+
+bool isBodyExist(string i_buffer)
+{
+	size_t pos = i_buffer.find("\r\n\r\n");
+	return (i_buffer.size() >= pos + 5);
 }
