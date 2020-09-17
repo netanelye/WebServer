@@ -85,4 +85,5 @@ string htmlToString(ifstream& htmlFile);
 void printBodyParameters(Server& i_Server, int index);
 void parseResponse(Server& i_Server, int index);
 void deleteBegingSpaces(string& i_Input);
+string GetSubHeader(string& buffer, string lookFor, int offset);
 void mapInsert(map<string, string>& i_Request, string i_Key, string i_Value);

@@ -1,7 +1,8 @@
+#define _CRT_SECURE_NO_WARNINGS
 #pragma once
 #include <iostream>
 #include <string>
-
+#include <time.h>
 using namespace std;
 
 
@@ -17,7 +18,7 @@ struct Response
 	int contentLength = 0;
 	string contentType = "text/html";
 	string body;
-	//string allow = "";
+	string allow;
 	string cacheControl = "no-cache, private";// delete
 	static string newLine;
 };

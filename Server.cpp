@@ -156,7 +156,6 @@ void sendMessage(Server& i_Server, int index)
 	cout << "Web Server: Sent: " << bytesSent << "\\" << sendBuff.size() << " bytes of \"" << sendBuff << "\" message.\n";
 
 	i_Server.sockets[index].send = IDLE;
-	//i_Server.sockets[index].requests.pop();
 }
 
 void initWinsock()
@@ -453,7 +452,6 @@ Response generateGetResponse(Server& i_Server, int index)
 Response generatePostResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	printBodyParameters(i_Server, index);
 	output.code = OK;
 	return output;
 }
@@ -462,7 +460,6 @@ Response generateHeadResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
 	output.body = "";
-	output.contentLength = 0;
 	return output;
 }
 
@@ -500,12 +497,29 @@ Response generateTraceResponse(Server& i_Server, int index)
 
 void printBodyParameters(Server& i_Server, int index)
 {
+
 	string buffer = i_Server.sockets[index].buffer;
 	size_t pos = buffer.find("\r\n\r\n");
-	if (pos != string::npos)
+	if (buffer.size() >= pos + 5)
 	{
-		string param = buffer.substr(pos, buffer.size());
-		buffer.erase(0, pos);
+		if (pos != string::npos)
+		{
+			buffer = buffer.substr(pos, buffer.size());
+	
+			buffer.erase(0, 4);
+			pos = buffer.find("\r");
+			if (pos != string::npos && pos < buffer.size())
+			{
+				buffer.erase(pos, buffer.size());
+			}
+		}
+		pos = buffer.find('=');
+		if (pos != string::npos)
+		{
+			string entityBody = buffer.substr(0, pos);;
+			string octet = buffer.substr(pos + 1, buffer.size());
+			cout << "POST Response Body = entity-body: " << entityBody << " *OCTET: " << octet << endl;
+		}
 	}
 }
 
@@ -514,36 +528,30 @@ void parseResponse(Server& i_Server, int index)
 	string buffer = i_Server.sockets[index].buffer;
 	map<string, string>& request = i_Server.sockets[index].request;
 
-	deleteBegingSpaces(buffer);
-	size_t pos = buffer.find(" ");
-	if (pos != string::npos)
-	{
-		string method = buffer.substr(0, pos);
-		buffer.erase(0, pos);
-		mapInsert(request, "Method", method);
-	}
+	string method = GetSubHeader(buffer, " ", 0);
+	mapInsert(request, "Method", method);
 
-	deleteBegingSpaces(buffer);
-	pos = buffer.find(" ");
-	if (pos != string::npos)
-	{
-		string path = buffer.substr(0, pos);
-		buffer.erase(0, pos);
-		mapInsert(request, "Path", path);
-	}
 
-	deleteBegingSpaces(buffer);
-	pos = buffer.find("\r");
-	if (pos != string::npos)
-	{
-		string version = buffer.substr(0, pos);
-		buffer.erase(0, pos + 2);
-		mapInsert(request, "Version", version);
-	}
+	string path = GetSubHeader(buffer, " ", 0);
+	mapInsert(request, "Path", path);
 
+	string version = GetSubHeader(buffer, "\r", 2);
+	mapInsert(request, "Version", version);
+
+	size_t pos;
 	while (buffer.size() > 1 && buffer[0] != '\r')
 	{
-		pos = buffer.find(":");
+		string key = GetSubHeader(buffer, ":", 2); 
+		if (!key.empty())
+		{
+			string value = GetSubHeader(buffer, "\r", 2);
+			if (!value.empty())
+			{
+				mapInsert(request, key, value);
+			}
+		}
+
+		/*pos = buffer.find(":");
 		if (pos != string::npos)
 		{
 			string key = buffer.substr(0, pos);
@@ -555,11 +563,23 @@ void parseResponse(Server& i_Server, int index)
 				buffer.erase(0, pos + 2);
 				mapInsert(request, key, value);
 			}
-		}
+		}*/
 	}
-
+	printBodyParameters(i_Server, index);
 }
 
+string GetSubHeader(string& buffer, string lookFor, int offset)
+{
+	deleteBegingSpaces(buffer);
+	size_t pos = buffer.find(lookFor);
+	string result;
+	if (pos != string::npos)
+	{
+		result = buffer.substr(0, pos);
+		buffer.erase(0, pos + offset);
+	}
+	return result;
+}
 void deleteBegingSpaces(string& i_Input)
 {
 	size_t pos = i_Input.find_first_not_of(" ");
