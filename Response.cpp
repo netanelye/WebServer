@@ -16,7 +16,11 @@ string convertResponseToString(Response& i_Response)
 	output += string("Date: ") + date + Response::newLine;
 	output += string("Cache-Control: ") + i_Response.cacheControl + Response::newLine;
 	output += string("Content-Type: ") + i_Response.contentType + Response::newLine;
-	if (i_Response.contentLength > 0)
+	if (!i_Response.contentLocation.empty())
+	{
+		output += string("Content-Location: ") + i_Response.contentLocation + Response::newLine;
+	}
+	if (i_Response.contentLength >= 0)
 	{
 		output += string("Content-Length: ") + to_string(i_Response.contentLength) + Response::newLine;
 	}
@@ -51,6 +55,10 @@ string eCodeToString(eCode i_Code)
 		break;
 	case Accepted:
 		output = "Accepted";
+		break;
+	
+	case InternalServerError:
+		output = "Internal Server Error";
 		break;
 	}
 	return output;

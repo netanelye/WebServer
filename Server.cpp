@@ -466,42 +466,40 @@ Response generateHeadResponse(Server& i_Server, int index)
 Response generatePutResponse(Server& i_Server, int index)
 {
 	string buffer = i_Server.sockets[index].buffer;
-	Response output = generateGetResponse(i_Server, index);
+	Response output;
 	string& continueTo = i_Server.sockets[index].continueTo;
 	string& prevPath = i_Server.sockets[index].prevPath;
 	
-	ofstream fileToWrite;
+	
 	if(i_Server.sockets[index].request["Expect"] == "100-continue")
 	{
 		continueTo = "PUT";
 		prevPath = i_Server.sockets[index].request["Path"];
 		output.code = Continue;
 	}
-	else if (!continueTo.empty())
-	{
-		// move the full message to file
-		/*fileToWrite.open(prevPath, ios::trunc);
-		if (fileToWrite.is_open())
-		{
-			fileToWrite << i_Server.sockets[index].buffer;
-			fileToWrite.close();
-			output.code = Created;
-		}*/
-		continueTo.clear();
-	}
-
+	
 	if(isBodyExist(buffer))
 	{
 		// move body to file
 		prevPath.erase(0, 1);
+		ofstream fileToWrite;
 		fileToWrite.open(prevPath, ios::trunc);
 		if (fileToWrite.is_open())
 		{
 			string body = getBody(i_Server.sockets[index].buffer);
 			fileToWrite << body;
-			fileToWrite.close();
 			output.code = Created;
+			output.body = body;
+			output.contentLength = body.size();
+			output.contentLocation = prevPath;
+			continueTo.clear();
+			fileToWrite.close();
 		}
+		else
+		{
+			output.code = InternalServerError;
+		}
+		
 	}
 	
 	return output;
@@ -509,9 +507,17 @@ Response generatePutResponse(Server& i_Server, int index)
 
 Response generateDeleteResponse(Server& i_Server, int index)
 {
-	Response output = generateGetResponse(i_Server, index);
-	output.body = "";
-	output.contentLength = 0;
+	Response output;
+	string path = i_Server.sockets[index].request["Path"];
+	path.erase(0, 1);
+	if (remove(path.c_str()) == 0)
+	{
+		output.code = OK;
+	}
+	else
+	{
+		output.code = NotFound;
+	}
 	return output;
 }
 
@@ -524,9 +530,12 @@ Response generateOptionsResponse(Server& i_Server, int index)
 
 Response generateTraceResponse(Server& i_Server, int index)
 {
-	Response output = generateGetResponse(i_Server, index);
-	output.body = "";
-	output.contentLength = 0;
+	Response output;
+	string buffer = i_Server.sockets[index].buffer;
+	output.body = buffer;
+	output.contentLength = buffer.size();
+	output.contentType = "message/http";
+	output.code = OK;
 	return output;
 }
 

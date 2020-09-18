@@ -6,7 +6,10 @@
 using namespace std;
 
 
-enum eCode { Continue = 100, OK = 200, Created = 201, Accepted = 202, NotFound = 404};
+enum eCode { Continue = 100, OK = 200,
+			Created = 201, Accepted = 202, 
+			NotFound = 404, InternalServerError = 500
+			};
 struct Response
 {
 	string HTTPVersion = "HTTP/1.1";
@@ -20,6 +23,7 @@ struct Response
 	string body;
 	string allow; //?
 	string cacheControl = "no-cache, private";// delete
+	string contentLocation;
 	static const string newLine;
 	static const string allowMethods;
 };
