@@ -112,6 +112,7 @@ void sendMessage(Server& i_Server, int index)
 	Response response;
 	SOCKET msgSocket = i_Server.sockets[index].id;
 	string method = i_Server.sockets[index].request["Method"];
+	string continueTo = i_Server.sockets[index].continueTo;
 	if (method == "GET")
 	{
 		response = generateGetResponse(i_Server, index);
@@ -124,7 +125,7 @@ void sendMessage(Server& i_Server, int index)
 	{
 		response = generateHeadResponse(i_Server, index);
 	}
-	else if (method == "PUT")
+	else if (method == "PUT" || continueTo == "PUT")
 	{
 		response = generatePutResponse(i_Server, index);
 	}
@@ -437,6 +438,7 @@ Response generateGetResponse(Server& i_Server, int index)
 		outPut.code = OK;
 		outPut.contentLength = fileAsString.size();
 		outPut.body = fileAsString;
+		htmlFile.close();
 	}
 	else
 	{
@@ -463,25 +465,44 @@ Response generateHeadResponse(Server& i_Server, int index)
 
 Response generatePutResponse(Server& i_Server, int index)
 {
+	string buffer = i_Server.sockets[index].buffer;
 	Response output = generateGetResponse(i_Server, index);
+	string& continueTo = i_Server.sockets[index].continueTo;
+	string& prevPath = i_Server.sockets[index].prevPath;
 	
+	ofstream fileToWrite;
 	if(i_Server.sockets[index].request["Expect"] == "100-continue")
 	{
-		Continue = true;
 		continueTo = "PUT";
+		prevPath = i_Server.sockets[index].request["Path"];
 		output.code = Continue;
 	}
-	else if (Continue)
+	else if (!continueTo.empty())
 	{
 		// move the full message to file
-		Continue = false;
+		/*fileToWrite.open(prevPath, ios::trunc);
+		if (fileToWrite.is_open())
+		{
+			fileToWrite << i_Server.sockets[index].buffer;
+			fileToWrite.close();
+			output.code = Created;
+		}*/
+		continueTo.clear();
 	}
-	else
+
+	if(isBodyExist(buffer))
 	{
 		// move body to file
-		output.code = OK;
+		prevPath.erase(0, 1);
+		fileToWrite.open(prevPath, ios::trunc);
+		if (fileToWrite.is_open())
+		{
+			string body = getBody(i_Server.sockets[index].buffer);
+			fileToWrite << body;
+			fileToWrite.close();
+			output.code = Created;
+		}
 	}
-	
 	
 	return output;
 }
@@ -511,7 +532,6 @@ Response generateTraceResponse(Server& i_Server, int index)
 
 void printBodyParameters(Server& i_Server, int index)
 {
-
 	string buffer = i_Server.sockets[index].buffer;
 	size_t pos = buffer.find("\r\n\r\n");
 	if (buffer.size() >= pos + 5)
@@ -601,4 +621,11 @@ bool isBodyExist(string i_buffer)
 {
 	size_t pos = i_buffer.find("\r\n\r\n");
 	return (i_buffer.size() >= pos + 5);
+}
+
+string getBody(string i_Buffer)
+{
+	size_t pos = i_Buffer.find("\r\n\r\n");
+	string res = i_Buffer.substr(pos + 4, i_Buffer.size());
+	return res;
 }
