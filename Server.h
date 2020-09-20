@@ -47,7 +47,6 @@ typedef struct socketState
 typedef struct server
 {
 	SocketState sockets[MAX_SOCKETS] = { 0 };
-	//Request requests[NUM_REQUESTS];
 	int socketsCount = 0;
 	SOCKET listenSocket;
 }Server;
@@ -82,3 +81,8 @@ void mapInsert(map<string, string>& i_Request, string i_Key, string i_Value);
 string getBody(string i_Buffer);
 void terminateSocket(SOCKET& socket, Server& server, int index);
 void messageHandler(Server& i_Server, int index);
+void isTimeOut(Server& i_Server);
+void initWaitRecvSet(Server& i_Server, fd_set& waitRecv);
+void initWaitSendSet(Server& i_Server, fd_set& waitSend);
+void acceptAndRecieveMsg(Server& i_Server, int nfd, fd_set& waitRecv);
+void sendAllMessages(Server& i_Server, int nfd, fd_set& waitSend);
