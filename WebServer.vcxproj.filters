@@ -32,7 +32,10 @@
     <ClInclude Include="Response.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="request.h">
+    <ClInclude Include="Request.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="eCode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

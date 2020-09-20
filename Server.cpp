@@ -1,15 +1,15 @@
 #include "Server.h"
 
-bool addSocket(Server& i_Server, SOCKET id, int what)
+bool addSocket(Server& i_Server, SOCKET id, eSocketStatus what)
 {
 	unsigned long flag = 1;
 	for (int i = 0; i < MAX_SOCKETS; i++)
 	{
-		if (i_Server.sockets[i].recv == EMPTY)
+		if (i_Server.sockets[i].recv == eSocketStatus::EMPTY)
 		{
 			i_Server.sockets[i].id = id;
 			i_Server.sockets[i].recv = what;
-			i_Server.sockets[i].send = IDLE;
+			i_Server.sockets[i].send = eSocketStatus::IDLE;
 			i_Server.sockets[i].len = 0;
 			i_Server.socketsCount++;
 			if (ioctlsocket(i_Server.sockets[i].id, FIONBIO, &flag) != 0)
@@ -24,8 +24,8 @@ bool addSocket(Server& i_Server, SOCKET id, int what)
 
 void removeSocket(Server& i_Server, int index)
 {
-	i_Server.sockets[index].recv = EMPTY;
-	i_Server.sockets[index].send = EMPTY;
+	i_Server.sockets[index].recv = eSocketStatus::EMPTY;
+	i_Server.sockets[index].send = eSocketStatus::EMPTY;
 	i_Server.socketsCount--;
 }
 
@@ -52,7 +52,7 @@ void acceptConnection(Server& i_Server, int index)
 	//	cout << "Time Server: Error at ioctlsocket(): " << WSAGetLastError() << endl;
 	//}
 
-	if (addSocket(i_Server, msgSocket, RECEIVE) == false)
+	if (addSocket(i_Server, msgSocket, eSocketStatus::RECEIVE) == false)
 	{
 		cout << "\t\tToo many connections, dropped!\n";
 		closesocket(id);
@@ -63,46 +63,55 @@ void acceptConnection(Server& i_Server, int index)
 void receiveMessage(Server& i_Server, int index)
 {
 	SOCKET msgSocket = i_Server.sockets[index].id;
-
+	i_Server.sockets[index].timer = time(0);
 	int len = i_Server.sockets[index].len;
 	int bytesRecv = recv(msgSocket, &i_Server.sockets[index].buffer[len], sizeof(i_Server.sockets[index].buffer) - len, 0);
 
 	if (SOCKET_ERROR == bytesRecv)
 	{
 		cout << "Web Server: Error at recv(): " << WSAGetLastError() << endl;
-		closesocket(msgSocket);
-		removeSocket(i_Server, index);
+		terminateSocket(msgSocket, i_Server, index);
 		return;
 	}
 
 	if (bytesRecv == 0)
 	{
-		closesocket(msgSocket);
-		removeSocket(i_Server, index);
+		terminateSocket(msgSocket, i_Server, index);
 		return;
 	}
 	else
 	{
 		i_Server.sockets[index].buffer[len + bytesRecv] = '\0'; //add the null-terminating to make it a string
 		cout << "Web Server: Recieved: " << bytesRecv << " bytes of \"" << &i_Server.sockets[index].buffer[len] << "\" message.\n";
-
 		i_Server.sockets[index].len += bytesRecv;
-		if (i_Server.sockets[index].len > 0)
-		{			
-			parseResponse(i_Server, index);
-			if (i_Server.sockets[index].request.find("Method") != i_Server.sockets[index].request.end())
-			{
-				i_Server.sockets[index].send = SEND;
-			}
-			//we will never get here
-			else if (strncmp(i_Server.sockets[index].buffer, "Exit", 4) == 0)
-			{
-				closesocket(msgSocket);
-				removeSocket(i_Server, index);
-				return;
-			}
+		messageHandler(i_Server, index);
+	}
+}
+
+void messageHandler(Server& i_Server, int index)
+{
+	SOCKET msgSocket = i_Server.sockets[index].id;
+	if (i_Server.sockets[index].len > 0)
+	{
+		parseResponse(i_Server, index);
+		if (i_Server.sockets[index].request.find("Method") != i_Server.sockets[index].request.end())
+		{
+			i_Server.sockets[index].send = eSocketStatus::SEND;
+		}
+		//we will never get here
+		else if (strncmp(i_Server.sockets[index].buffer, "Exit", 4) == 0)
+		{
+			closesocket(msgSocket);
+			removeSocket(i_Server, index);
+			return;
 		}
 	}
+}
+
+void terminateSocket(SOCKET& socket, Server& server, int index)
+{
+	closesocket(socket);
+	removeSocket(server, index);
 }
 
 void sendMessage(Server& i_Server, int index)
@@ -147,7 +156,7 @@ void sendMessage(Server& i_Server, int index)
 		return;
 	}
 	sendBuff = convertResponseToString(response);
-	bytesSent = send(msgSocket, sendBuff.c_str(), sendBuff.size(), 0);
+	bytesSent = send(msgSocket, sendBuff.c_str(), (int)sendBuff.size(), 0);
 	if (SOCKET_ERROR == bytesSent)
 	{
 		cout << "Web Server: Error at send(): " << WSAGetLastError() << endl;
@@ -156,22 +165,12 @@ void sendMessage(Server& i_Server, int index)
 
 	cout << "Web Server: Sent: " << bytesSent << "\\" << sendBuff.size() << " bytes of \"" << sendBuff << "\" message.\n";
 
-	i_Server.sockets[index].send = IDLE;
+	i_Server.sockets[index].send = eSocketStatus::IDLE;
 }
 
 void initWinsock()
 {
-	// Initialize Winsock (Windows Sockets).
-
-	// Create a WSADATA object called wsaData.
-	// The WSADATA structure contains information about the Windows 
-	// Sockets implementation.
 	WSAData wsaData;
-
-	// Call WSAStartup and return its value as an integer and check for errors.
-	// The WSAStartup function initiates the use of WS2_32.DLL by a process.
-	// First parameter is the version number 2.2.
-	// The WSACleanup function destructs the use of WS2_32.DLL by a process.
 	if (NO_ERROR != WSAStartup(MAKEWORD(2, 2), &wsaData))
 	{
 		cout << "Web Server: Error at WSAStartup()\n";
@@ -193,41 +192,30 @@ void run(Server& i_Server)
 		return;
 	}
 
-	addSocket(i_Server, i_Server.listenSocket, LISTEN);
-	// Accept connections and handles them one by one.
+	addSocket(i_Server, i_Server.listenSocket, eSocketStatus::LISTEN);
 	while (true)
 	{
-		// The select function determines the status of one or more sockets,
-		// waiting if necessary, to perform asynchronous I/O. Use fd_sets for
-		// sets of handles for reading, writing and exceptions. select gets "timeout" for waiting
-		// and still performing other operations (Use NULL for blocking). Finally,
-		// select returns the number of descriptors which are ready for use (use FD_ISSET
-		// macro to check which descriptor in each set is ready to be used).
 		fd_set waitRecv;
 		FD_ZERO(&waitRecv);
 		for (int i = 0; i < MAX_SOCKETS; i++)
 		{
-			if ((i_Server.sockets[i].recv == LISTEN) || (i_Server.sockets[i].recv == RECEIVE))
+			if ((i_Server.sockets[i].recv == eSocketStatus::LISTEN)
+				|| (i_Server.sockets[i].recv == eSocketStatus::RECEIVE))
 			{
 				FD_SET(i_Server.sockets[i].id, &waitRecv);
-			}	
+			}
 		}
 
 		fd_set waitSend;
 		FD_ZERO(&waitSend);
 		for (int i = 0; i < MAX_SOCKETS; i++)
 		{
-			if (i_Server.sockets[i].send == SEND)
+			if (i_Server.sockets[i].send == eSocketStatus::SEND)
 			{
 				FD_SET(i_Server.sockets[i].id, &waitSend);
-			}	
+			}
 		}
 
-
-		// Wait for interesting event.
-		// Note: First argument is ignored. The fourth is for exceptions.
-		// And as written above the last is a timeout, hence we are blocked if nothing happens.
-		//
 		int nfd;
 		nfd = select(0, &waitRecv, &waitSend, NULL, NULL);
 		if (nfd == SOCKET_ERROR)
@@ -242,15 +230,13 @@ void run(Server& i_Server)
 			if (FD_ISSET(i_Server.sockets[i].id, &waitRecv))
 			{
 				nfd--;
-				switch (i_Server.sockets[i].recv)
+				if (i_Server.sockets[i].recv == eSocketStatus::LISTEN)
 				{
-				case LISTEN:
 					acceptConnection(i_Server, i);
-					break;
-
-				case RECEIVE:
+				}
+				else if (i_Server.sockets[i].recv == eSocketStatus::RECEIVE)
+				{
 					receiveMessage(i_Server, i);
-					break;
 				}
 			}
 		}
@@ -262,7 +248,7 @@ void run(Server& i_Server)
 				nfd--;
 				switch (i_Server.sockets[i].send)
 				{
-				case SEND:
+				case eSocketStatus::SEND:
 					sendMessage(i_Server, i);
 					break;
 				}
@@ -278,24 +264,7 @@ void run(Server& i_Server)
 
 bool initListenSocket(Server& i_Server)
 {
-	// Server side:
-	// Create and bind a socket to an internet address.
-	// Listen through the socket for incoming connections.
-
-	// After initialization, a SOCKET object is ready to be instantiated.
-
-	// Create a SOCKET object called listenSocket. 
-	// For this application:	use the Internet address family (AF_INET), 
-	//							streaming sockets (SOCK_STREAM), 
-	//							and the TCP/IP protocol (IPPROTO_TCP).
 	i_Server.listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-	// Check for errors to ensure that the socket is a valid socket.
-	// Error detection is a key part of successful networking code. 
-	// If the socket call fails, it returns INVALID_SOCKET. 
-	// The if statement in the previous code is used to catch any errors that
-	// may have occurred while creating the socket. WSAGetLastError returns an 
-	// error number associated with the last error that occurred.
 	if (INVALID_SOCKET == i_Server.listenSocket)
 	{
 		cout << "Web Server: Error at socket(): " << WSAGetLastError() << endl;
@@ -307,33 +276,10 @@ bool initListenSocket(Server& i_Server)
 
 bool initServerSide(Server& i_Server)
 {
-
-	// For a server to communicate on a network, it must bind the socket to 
-	// a network address.
-
-	// Need to assemble the required data for connection in sockaddr structure.
-
-	// Create a sockaddr_in object called serverService. 
 	sockaddr_in serverService;
-	// Address family (must be AF_INET - Internet address family).
 	serverService.sin_family = AF_INET;
-	// IP address. The sin_addr is a union (s_addr is a unsigned long 
-	// (4 bytes) data type).
-	// inet_addr (Iternet address) is used to convert a string (char *) 
-	// into unsigned long.
-	// The IP address is INADDR_ANY to accept connections on all interfaces.
-	serverService.sin_addr.s_addr = INADDR_ANY;//inet_addr("10.100.102.12")
-	// IP Port. The htons (host to network - short) function converts an
-	// unsigned short from host to TCP/IP network byte order 
-	// (which is big-endian).
+	serverService.sin_addr.s_addr = INADDR_ANY;
 	serverService.sin_port = htons(TIME_PORT);
-
-	// Bind the socket for client's requests.
-
-	// The bind function establishes a connection to a specified socket.
-	// The function uses the socket handler, the sockaddr structure (which
-	// defines properties of the desired connection) and the length of the
-	// sockaddr structure (in bytes).
 	if (SOCKET_ERROR == bind(i_Server.listenSocket, (SOCKADDR*)&serverService, sizeof(serverService)))
 	{
 		cout << "Web Server: Error at bind(): " << WSAGetLastError() << endl;
@@ -342,9 +288,6 @@ bool initServerSide(Server& i_Server)
 		return false;
 	}
 
-	// Listen on the Socket for incoming connections.
-	// This socket accepts only one connection (no pending connections 
-	// from other clients). This sets the backlog parameter.
 	if (SOCKET_ERROR == listen(i_Server.listenSocket, 5))
 	{
 		cout << "Web Server: Error at listen(): " << WSAGetLastError() << endl;
@@ -352,37 +295,14 @@ bool initServerSide(Server& i_Server)
 		WSACleanup();
 		return false;
 	}
+
 	return true;
-}
-
-void initServer(Server& i_Server)
-{
-
-}
-
-void initRequests(Server& i_Server)
-{
-	const int SEND_OPTIONS = 1;
-	const int SEND_GET = 2;
-	const int SEND_HEAD = 3;
-	const int SEND_POST = 4;
-const int SEND_PUT = 5;
-const int SEND_DELETE = 6;
-const int SEND_TRACE = 7;
-
-i_Server.requests[0].reqAsString = "GET";
-i_Server.requests[1].reqAsString = "POST";
-i_Server.requests[2].reqAsString = "GET";
-i_Server.requests[3].reqAsString = "GET";
-i_Server.requests[4].reqAsString = "GET";
-i_Server.requests[5].reqAsString = "GET";
-i_Server.requests[6].reqAsString = "GET";
 }
 
 void getSubType(Server& i_Server, int index)
 {
 	string buffer = i_Server.sockets[index].buffer;
-	int found = buffer.find('?');
+	size_t found = buffer.find('?');
 	if (found != string::npos)
 	{
 		i_Server.sockets[index].isQuary = true;
@@ -396,7 +316,7 @@ string htmlToString(ifstream& htmlFile)
 	string output;
 	while (getline(htmlFile, temp))
 	{
-		output += temp += Response::newLine;
+		output += temp += Response::r_NewLine;
 	}
 
 	return output;
@@ -411,9 +331,10 @@ Response generateGetResponse(Server& i_Server, int index)
 	{
 		return Response();
 	}
+
 	htmlPath.erase(0, 1);
 	string fileAsString;
-	Response outPut;
+	Response output;
 	if (i_Server.sockets[index].isQuary)
 	{
 		if (i_Server.sockets[index].quary == "he")
@@ -435,31 +356,47 @@ Response generateGetResponse(Server& i_Server, int index)
 	if (htmlFile.is_open())
 	{
 		fileAsString = htmlToString(htmlFile);
-		outPut.code = OK;
-		outPut.contentLength = fileAsString.size();
-		outPut.body = fileAsString;
+		output.m_Code = eCode::OK;
+		output.m_ContentLength = fileAsString.size();
+		output.m_Body = fileAsString;
 		htmlFile.close();
 	}
 	else
 	{
-		outPut.code = NotFound;
-		outPut.contentLength = 0;
+		output.m_Code = eCode::NotFound;
+		output.m_ContentLength = 0;
 	}
 
-	return outPut;
+	return output;
 }
 
 Response generatePostResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	output.code = OK;
+	string path = "data.txt";
+	string body = getBody(i_Server.sockets[index].buffer);
+	body += "\n";
+	ofstream fileToWrite;
+	fileToWrite.open(path, ios::app);
+	if (fileToWrite.is_open())
+	{
+		fileToWrite << body;
+		output.m_Code = eCode::OK;
+	}
+	else
+	{
+		fileToWrite << body;
+		output.m_Code = eCode::Created;
+	}
+	printBodyParameters(i_Server, index);
+	
 	return output;
 }
 
 Response generateHeadResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	output.body.clear();
+	output.m_Body.clear();
 	return output;
 }
 
@@ -469,16 +406,16 @@ Response generatePutResponse(Server& i_Server, int index)
 	Response output;
 	string& continueTo = i_Server.sockets[index].continueTo;
 	string& prevPath = i_Server.sockets[index].prevPath;
-	
-	
-	if(i_Server.sockets[index].request["Expect"] == "100-continue")
+
+
+	if (i_Server.sockets[index].request["Expect"] == "100-continue")
 	{
 		continueTo = "PUT";
 		prevPath = i_Server.sockets[index].request["Path"];
-		output.code = Continue;
+		output.m_Code = eCode::Continue;
 	}
-	
-	if(isBodyExist(buffer))
+
+	if (isBodyExist(buffer))
 	{
 		// move body to file
 		prevPath.erase(0, 1);
@@ -488,20 +425,20 @@ Response generatePutResponse(Server& i_Server, int index)
 		{
 			string body = getBody(i_Server.sockets[index].buffer);
 			fileToWrite << body;
-			output.code = Created;
-			output.body = body;
-			output.contentLength = body.size();
-			output.contentLocation = prevPath;
+			output.m_Code = eCode::Created;
+			output.m_Body = body;
+			output.m_ContentLength = body.size();
+			output.m_ContentLocation = prevPath;
 			continueTo.clear();
 			fileToWrite.close();
 		}
 		else
 		{
-			output.code = InternalServerError;
+			output.m_Code = eCode::InternalServerError;
 		}
-		
+
 	}
-	
+
 	return output;
 }
 
@@ -512,11 +449,11 @@ Response generateDeleteResponse(Server& i_Server, int index)
 	path.erase(0, 1);
 	if (remove(path.c_str()) == 0)
 	{
-		output.code = OK;
+		output.m_Code = eCode::OK;
 	}
 	else
 	{
-		output.code = NotFound;
+		output.m_Code = eCode::NotFound;
 	}
 	return output;
 }
@@ -524,7 +461,7 @@ Response generateDeleteResponse(Server& i_Server, int index)
 Response generateOptionsResponse(Server& i_Server, int index)
 {
 	Response output = generateGetResponse(i_Server, index);
-	output.allow = Response::allowMethods;
+	output.m_Allow = Response::r_AllowMethods;
 	return output;
 }
 
@@ -532,35 +469,24 @@ Response generateTraceResponse(Server& i_Server, int index)
 {
 	Response output;
 	string buffer = i_Server.sockets[index].buffer;
-	output.body = buffer;
-	output.contentLength = buffer.size();
-	output.contentType = "message/http";
-	output.code = OK;
+	output.m_Body = buffer;
+	output.m_ContentLength = buffer.size();
+	output.r_ContentType = "message/http";
+	output.m_Code = eCode::OK;
 	return output;
 }
 
 void printBodyParameters(Server& i_Server, int index)
 {
 	string buffer = i_Server.sockets[index].buffer;
-	size_t pos = buffer.find("\r\n\r\n");
-	if (buffer.size() >= pos + 5)
+	if (isBodyExist(buffer))
 	{
+		string body = getBody(buffer);
+		size_t pos = body.find('=');
 		if (pos != string::npos)
 		{
-			buffer = buffer.substr(pos, buffer.size());
-	
-			buffer.erase(0, 4);
-			pos = buffer.find("\r");
-			if (pos != string::npos && pos < buffer.size())
-			{
-				buffer.erase(pos, buffer.size());
-			}
-		}
-		pos = buffer.find('=');
-		if (pos != string::npos)
-		{
-			string entityBody = buffer.substr(0, pos);;
-			string octet = buffer.substr(pos + 1, buffer.size());
+			string entityBody = body.substr(0, pos);;
+			string octet = body.substr(pos + 1, body.size());
 			cout << "POST Response Body = entity-body: " << entityBody << " *OCTET: " << octet << endl;
 		}
 	}
@@ -570,21 +496,16 @@ void parseResponse(Server& i_Server, int index)
 {
 	string buffer = i_Server.sockets[index].buffer;
 	map<string, string>& request = i_Server.sockets[index].request;
-
 	string method = GetSubHeader(buffer, " ", 0);
 	mapInsert(request, "Method", method);
-
-
 	string path = GetSubHeader(buffer, " ", 0);
 	mapInsert(request, "Path", path);
-
 	string version = GetSubHeader(buffer, "\r", 2);
 	mapInsert(request, "Version", version);
 
-
 	while (buffer.size() > 1 && buffer[0] != '\r')
 	{
-		string key = GetSubHeader(buffer, ":", 2); 
+		string key = GetSubHeader(buffer, ":", 2);
 		if (!key.empty())
 		{
 			string value = GetSubHeader(buffer, "\r", 2);
@@ -594,7 +515,6 @@ void parseResponse(Server& i_Server, int index)
 			}
 		}
 	}
-	printBodyParameters(i_Server, index);
 }
 
 string GetSubHeader(string& buffer, string lookFor, int offset)
@@ -609,6 +529,7 @@ string GetSubHeader(string& buffer, string lookFor, int offset)
 	}
 	return result;
 }
+
 void deleteBegingSpaces(string& i_Input)
 {
 	size_t pos = i_Input.find_first_not_of(" ");
@@ -616,10 +537,9 @@ void deleteBegingSpaces(string& i_Input)
 	{
 		i_Input = i_Input.substr(pos);
 	}
-
 }
 
-void mapInsert(map<string, string>& i_Request ,string i_Key, string i_Value)
+void mapInsert(map<string, string>& i_Request, string i_Key, string i_Value)
 {
 	map<string, string>::iterator it;
 	it = i_Request.find(i_Key);
@@ -635,6 +555,28 @@ bool isBodyExist(string i_buffer)
 string getBody(string i_Buffer)
 {
 	size_t pos = i_Buffer.find("\r\n\r\n");
-	string res = i_Buffer.substr(pos + 4, i_Buffer.size());
+	string res;
+	if (pos != string::npos)
+	{
+		res = i_Buffer.substr(pos + 4, i_Buffer.size());
+		pos = i_Buffer.find("\r");
+		if (pos != string::npos)
+		{
+			res = res.substr(0, pos);
+		}
+	}
+
 	return res;
+}
+
+void isTimeOut(Server& i_Server, int index)
+{
+	size_t now = time(0);
+	for (int i = 1; i < MAX_SOCKETS; i++)
+	{
+		if (now > MAXTIMEOUT)
+		{
+
+		}
+	}
 }

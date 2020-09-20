@@ -11,12 +11,28 @@ using namespace std;
 #include <map>
 #include <queue>
 #include "Response.h"
+//#include "Request.h"
+#define NUM_REQUESTS 7
+#define MAXTIMEOUT 180
+
+const int TIME_PORT = 80;
+const int MAX_SOCKETS = 60;
+
+
+enum class eSocketStatus
+{
+	EMPTY,
+	LISTEN,
+	RECEIVE,
+	IDLE,
+	SEND
+};
 
 typedef struct socketState
 {
 	SOCKET id;			// Socket handle
-	int	recv;			// Receiving?
-	int	send;			// Sending?
+	eSocketStatus recv;	// Receiving?
+	eSocketStatus send;	// Sending?
 	int sendSubType;	// Sending sub-type
 	bool isQuary;
 	string quary;
@@ -25,42 +41,19 @@ typedef struct socketState
 	map<string, string> request;
 	string continueTo;
 	string prevPath;
+	time_t timer;
 }SocketState;
-
-const int TIME_PORT = 80;
-const int MAX_SOCKETS = 60;
-const int EMPTY = 0;
-const int LISTEN = 1;
-const int RECEIVE = 2;
-const int IDLE = 3;
-const int SEND = 4;
-const int SEND_OPTIONS = 1;
-const int SEND_GET = 2;
-const int SEND_HEAD = 3;
-const int SEND_POST = 4;
-const int SEND_PUT = 5;
-const int SEND_DELETE = 6;
-const int SEND_TRACE = 7;
-#define numRequsts  7
-
-/// <summary>
-/// Use for later
-/// </summary>
-typedef struct request
-{
-	string reqAsString;
-}Request;
 
 typedef struct server
 {
 	SocketState sockets[MAX_SOCKETS] = { 0 };
-	Request requests[numRequsts];
+	//Request requests[NUM_REQUESTS];
 	int socketsCount = 0;
 	SOCKET listenSocket;
 }Server;
 
 
-bool addSocket(Server& i_Server, SOCKET id, int what);
+bool addSocket(Server& i_Server, SOCKET id, eSocketStatus what);
 void removeSocket(Server& i_Server, int index);
 void acceptConnection(Server& i_Server, int index);
 void receiveMessage(Server& i_Server, int index);
@@ -69,9 +62,6 @@ void sendMessage(Server& i_Server, int index);
 void run(Server& i_Server);
 bool initListenSocket(Server& i_Server);
 bool initServerSide(Server& i_Server);
-
-void initServer(Server& i_Server);
-
 void getSubType(Server& i_Server, int index);
 
 Response generateGetResponse(Server& i_Server, int index);
@@ -90,3 +80,5 @@ string GetSubHeader(string& buffer, string lookFor, int offset);
 bool isBodyExist(string i_buffer);
 void mapInsert(map<string, string>& i_Request, string i_Key, string i_Value);
 string getBody(string i_Buffer);
+void terminateSocket(SOCKET& socket, Server& server, int index);
+void messageHandler(Server& i_Server, int index);

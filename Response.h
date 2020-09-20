@@ -3,29 +3,21 @@
 #include <iostream>
 #include <string>
 #include <time.h>
+#include "eCode.h"
 using namespace std;
 
-
-enum eCode { Continue = 100, OK = 200,
-			Created = 201, Accepted = 202, 
-			NotFound = 404, InternalServerError = 500
-			};
 struct Response
 {
-	string HTTPVersion = "HTTP/1.1";
-	eCode code;
-	//bool shouldClose = false;
-	//string contentLocation;
-	//string lastModified = "";
-	//string serverName = "Apachi";
-	int contentLength = 0;
-	string contentType = "text/html";
-	string body;
-	string allow; //?
-	string cacheControl = "no-cache, private";// delete
-	string contentLocation;
-	static const string newLine;
-	static const string allowMethods;
+	string r_HTTPVersion = "HTTP/1.1";
+	eCode m_Code = eCode::OK;
+	size_t m_ContentLength = 0;
+	string r_ContentType = "text/html";
+	string m_Body;
+	string m_Allow;
+	string m_CacheControl = "no-cache, private";
+	string m_ContentLocation;
+	static const string r_NewLine;
+	static const string r_AllowMethods;
 };
 
 string convertResponseToString(Response& i_Response);
