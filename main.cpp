@@ -6,4 +6,5 @@ int main()
 {
 	Server server;
 	run(server);
+	cout<<"hi"<<endl;
 }
